@@ -1,0 +1,50 @@
+Country,Alpha 2 Code,Regions,ISO Languages
+United States,US,NAMER,en
+United Kingdom,GB,EMEA,en
+Canada,CA,NAMER,en fr
+Germany,DE,EMEA,de
+France,FR,EMEA,fr
+Japan,JP,APAC,ja
+Australia,AU,APAC,en
+Brazil,BR,LATAM,pt
+Mexico,MX,LATAM,es
+India,IN,APAC,hi en
+China,CN,APAC,zh
+Spain,ES,EMEA,es
+Italy,IT,EMEA,it
+Netherlands,NL,EMEA,nl
+Singapore,SG,APAC,en zh ms ta
+South Korea,KR,APAC,ko
+Argentina,AR,LATAM,es
+Colombia,CO,LATAM,es
+Ireland,IE,EMEA,en ga
+Sweden,SE,EMEA,sv
+Denmark,DK,EMEA,da
+Norway,NO,EMEA,no
+Finland,FI,EMEA,fi
+Poland,PL,EMEA,pl
+Belgium,BE,EMEA,nl fr de
+Switzerland,CH,EMEA,de fr it
+Austria,AT,EMEA,de
+Portugal,PT,EMEA,pt
+New Zealand,NZ,APAC,en
+Philippines,PH,APAC,en tl
+Thailand,TH,APAC,th
+Malaysia,MY,APAC,ms en
+Indonesia,ID,APAC,id
+Vietnam,VN,APAC,vi
+South Africa,ZA,EMEA,en af zu xh
+UAE,AE,EMEA,ar en
+Saudi Arabia,SA,EMEA,ar
+Israel,IL,EMEA,he ar
+Turkey,TR,EMEA,tr
+Greece,GR,EMEA,el
+Czech Republic,CZ,EMEA,cs
+Romania,RO,EMEA,ro
+Hungary,HU,EMEA,hu
+Chile,CL,LATAM,es
+Peru,PE,LATAM,es
+Costa Rica,CR,LATAM,es
+Panama,PA,LATAM,es
+Uruguay,UY,LATAM,es
+Ecuador,EC,LATAM,es

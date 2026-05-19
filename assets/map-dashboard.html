@@ -1,0 +1,2050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026 Global Connect Passport - Live Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0A0E1A;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #F22F46 0%, #D9283E 100%);
+      padding: 12px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(242, 47, 70, 0.4);
+      position: relative;
+      z-index: 1000;
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo {
+      height: 40px;
+    }
+
+    .title {
+      color: white;
+      font-size: 1.8em;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      letter-spacing: 1px;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 25px;
+      color: white;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5em;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .stat-label {
+      font-size: 0.7em;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .leaderboard {
+      position: fixed;
+      top: 85px;
+      right: 20px;
+      width: 320px;
+      max-height: calc(100vh - 120px);
+      background: rgba(28, 41, 56, 0.95);
+      border-radius: 12px;
+      padding: 15px;
+      z-index: 1001;
+      backdrop-filter: blur(10px);
+      border: 2px solid #F22F46;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      overflow-y: auto;
+    }
+
+    .leaderboard h2 {
+      color: white;
+      font-size: 1.1em;
+      margin-bottom: 10px;
+      text-align: center;
+      border-bottom: 2px solid #F22F46;
+      padding-bottom: 8px;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      margin-bottom: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+
+    .leaderboard-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #F22F46;
+      transform: translateX(-3px);
+    }
+
+    .leaderboard-rank {
+      font-size: 1em;
+      font-weight: bold;
+      color: #F22F46;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .leaderboard-rank.gold {
+      color: #FFD700;
+      font-size: 1.2em;
+    }
+
+    .leaderboard-rank.silver {
+      color: #C0C0C0;
+      font-size: 1.1em;
+    }
+
+    .leaderboard-rank.bronze {
+      color: #CD7F32;
+      font-size: 1em;
+    }
+
+    .leaderboard-flag {
+      font-size: 1.2em;
+    }
+
+    .leaderboard-info {
+      flex: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .leaderboard-name {
+      color: white;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+
+    .leaderboard-country {
+      color: #9CA3AF;
+      font-size: 0.75em;
+    }
+
+    .leaderboard-stamps {
+      font-size: 1em;
+      font-weight: bold;
+      color: #10B981;
+      min-width: 30px;
+      text-align: right;
+    }
+
+    .leaderboard::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .leaderboard::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+
+    .leaderboard::-webkit-scrollbar-thumb {
+      background: #F22F46;
+      border-radius: 4px;
+    }
+
+    .leaderboard::-webkit-scrollbar-thumb:hover {
+      background: #D9283E;
+    }
+
+    .twilio-filter-logo {
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      opacity: 0.3;
+      transition: all 0.3s;
+      padding: 5px;
+      border-radius: 8px;
+    }
+
+    .twilio-filter-logo:hover {
+      opacity: 0.6;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .twilio-filter-logo.active {
+      opacity: 1;
+      background: rgba(242, 47, 70, 0.2);
+    }
+
+    .twilio-filter-logo svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .simulation-toggle {
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      opacity: 0.3;
+      transition: all 0.3s;
+      padding: 5px;
+      border-radius: 8px;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .simulation-toggle:hover {
+      opacity: 0.6;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .simulation-toggle.active {
+      opacity: 1;
+      background: rgba(245, 158, 11, 0.3);
+      animation: pulse-sim 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-sim {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .sim-mode-badge {
+      position: fixed;
+      top: 75px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(245, 158, 11, 0.95);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85em;
+      z-index: 1002;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: none;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .sim-mode-badge.active {
+      display: block;
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translate(-50%, -20px);
+        opacity: 0;
+      }
+      to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+      }
+    }
+
+    #map {
+      height: calc(100vh - 65px);
+      width: 100%;
+      background: #0A0E1A;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Ensure Leaflet tiles are visible */
+    .leaflet-container {
+      height: 100%;
+      width: 100%;
+      background: #0A0E1A !important;
+    }
+
+    .leaflet-tile-pane {
+      z-index: 200 !important;
+    }
+
+    .leaflet-tile {
+      opacity: 1 !important;
+    }
+
+    .leaflet-overlay-pane {
+      z-index: 400 !important;
+    }
+
+    .leaflet-marker-pane {
+      z-index: 600 !important;
+    }
+
+    .leaflet-popup-pane {
+      z-index: 700 !important;
+    }
+
+    #fireworks {
+      position: fixed;
+      top: 65px;
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 65px);
+      pointer-events: none;
+      z-index: 999;
+      mix-blend-mode: screen;
+    }
+
+    .user-popup {
+      background: linear-gradient(135deg, #F22F46 0%, #D9283E 100%);
+      color: white;
+      padding: 12px 18px;
+      border-radius: 25px;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(242, 47, 70, 0.6);
+      border: 3px solid white;
+      font-size: 14px;
+      text-align: center;
+      min-width: 100px;
+      animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    @keyframes popIn {
+      0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.2) rotate(10deg);
+      }
+      100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+
+    .pulse-ring {
+      position: absolute;
+      border: 3px solid #F22F46;
+      border-radius: 50%;
+      animation: pulse 2s ease-out infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.5);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(2.5);
+        opacity: 0;
+      }
+    }
+
+    .country-label {
+      font-size: 11px;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 1.5em;
+      text-align: center;
+      z-index: 2000;
+      background: rgba(28, 41, 56, 0.9);
+      padding: 30px 50px;
+      border-radius: 12px;
+      border: 2px solid #F22F46;
+    }
+
+    .bottom-left-container {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
+    .qr-code-container {
+      background: rgba(28, 41, 56, 0.95);
+      padding: 12px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+    }
+
+    .qr-code-container img {
+      width: 120px;
+      height: 120px;
+      display: block;
+      border-radius: 4px;
+    }
+
+    .icon-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: rgba(28, 41, 56, 0.95) !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+      padding: 0;
+      border-radius: 8px;
+      border: 1px solid #3B82F6;
+    }
+
+    .leaflet-popup-content {
+      margin: 0 !important;
+    }
+
+    .leaflet-popup-tip {
+      background: rgba(28, 41, 56, 0.95) !important;
+      border: 1px solid #3B82F6 !important;
+      border-top: none !important;
+      border-right: none !important;
+    }
+
+    .collector-marker {
+      z-index: 600 !important;
+      cursor: pointer;
+    }
+
+    .stamp-marker {
+      z-index: 500 !important;
+      cursor: pointer;
+    }
+
+    .leaflet-marker-icon {
+      transition: transform 0.2s;
+    }
+
+    .leaflet-marker-icon:hover {
+      transform: scale(1.2);
+    }
+
+    .airplane-icon {
+      z-index: 450 !important;
+      pointer-events: none;
+    }
+
+    /* Winners Overlay */
+    .winners-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 14, 26, 0.92);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .winners-overlay.show {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .winners-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      padding: 40px;
+      max-width: 1200px;
+      width: 90%;
+    }
+
+    .winners-title {
+      text-align: center;
+      color: white;
+      animation: slideDown 0.6s ease-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .winners-title-main {
+      font-size: 3em;
+      font-weight: 700;
+      text-shadow: 0 4px 12px rgba(242, 47, 70, 0.8);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .winners-title-sub {
+      font-size: 1.8em;
+      font-weight: 600;
+      color: #F22F46;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    .winners-title .trophy {
+      font-size: 1.2em;
+      animation: bounce 1s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .podium-container {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 30px;
+      width: 100%;
+    }
+
+    .winner-card {
+      background: linear-gradient(135deg, #1C2938 0%, #2A3B4D 100%);
+      border-radius: 16px;
+      padding: 30px 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      position: relative;
+      animation: slideUp 0.8s ease-out;
+      animation-fill-mode: both;
+      transition: transform 0.3s ease;
+    }
+
+    .winner-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .winner-card.first {
+      width: 320px;
+      border: 3px solid #FFD700;
+      box-shadow: 0 8px 32px rgba(255, 215, 0, 0.4);
+      animation-delay: 0.2s;
+    }
+
+    .winner-card.second {
+      width: 280px;
+      border: 3px solid #C0C0C0;
+      box-shadow: 0 8px 32px rgba(192, 192, 192, 0.3);
+      animation-delay: 0s;
+      margin-bottom: 40px;
+    }
+
+    .winner-card.third {
+      width: 280px;
+      border: 3px solid #CD7F32;
+      box-shadow: 0 8px 32px rgba(205, 127, 50, 0.3);
+      animation-delay: 0.4s;
+      margin-bottom: 40px;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(60px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .winner-medal {
+      font-size: 4em;
+      margin-bottom: 10px;
+      animation: rotate 1s ease-out;
+    }
+
+    .winner-card.first .winner-medal {
+      font-size: 5em;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(-180deg) scale(0);
+      }
+      to {
+        transform: rotate(0deg) scale(1);
+      }
+    }
+
+    .winner-rank {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .winner-card.first .winner-rank {
+      font-size: 1.8em;
+      color: #FFD700;
+    }
+
+    .winner-card.second .winner-rank {
+      color: #C0C0C0;
+    }
+
+    .winner-card.third .winner-rank {
+      color: #CD7F32;
+    }
+
+    .winner-flag {
+      font-size: 5em;
+      line-height: 1;
+    }
+
+    .winner-card.first .winner-flag {
+      font-size: 6em;
+    }
+
+    .winner-name {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: white;
+      text-align: center;
+      word-break: break-word;
+      max-width: 100%;
+    }
+
+    .winner-card.first .winner-name {
+      font-size: 1.8em;
+    }
+
+    .winner-country {
+      font-size: 1.2em;
+      color: #9CA3AF;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .winner-stamps {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.3em;
+      font-weight: 700;
+      color: #10B981;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 10px 20px;
+      border-radius: 20px;
+      border: 2px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .winner-card.first .winner-stamps {
+      font-size: 1.5em;
+    }
+
+    .stamp-icon {
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-section">
+      <svg class="logo" viewBox="0 0 240 60" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="30" cy="30" r="28" fill="none" stroke="white" stroke-width="2"/>
+        <circle cx="21" cy="21" r="5" fill="white"/>
+        <circle cx="39" cy="21" r="5" fill="white"/>
+        <circle cx="21" cy="39" r="5" fill="white"/>
+        <circle cx="39" cy="39" r="5" fill="white"/>
+        <text x="70" y="40" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" font-weight="700" fill="white">twilio</text>
+      </svg>
+      <div class="title">2026 Global Connect Passport</div>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-value" id="totalStamps">0</div>
+        <div class="stat-label">Stamps</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="activeUsers">0</div>
+        <div class="stat-label">Active</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="completedUsers">0</div>
+        <div class="stat-label">Completed</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sim-mode-badge" id="simModeBadge">🤖 SIMULATION MODE</div>
+
+  <div class="leaderboard" id="leaderboard">
+    <h2>🏆 Leaderboard</h2>
+    <div id="leaderboardContent">
+      <div style="color: #9CA3AF; text-align: center; padding: 20px;">Loading...</div>
+    </div>
+  </div>
+
+  <div class="loading" id="loadingIndicator">
+    <div>Loading map...</div>
+  </div>
+
+  <div id="map"></div>
+  <canvas id="fireworks"></canvas>
+
+  <!-- Audio Elements - Sound Effects -->
+  <audio id="fireworksSound" preload="auto">
+    <source src="fireworks-sound.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="celebrationSound" preload="auto">
+    <source src="celebration-fanfare.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Winners Overlay -->
+  <div class="winners-overlay" id="winnersOverlay">
+    <div class="winners-container">
+      <div class="winners-title">
+        <div class="winners-title-main">
+          <span class="trophy">🏆</span>
+          <span>Global Connect Passport</span>
+          <span class="trophy">🏆</span>
+        </div>
+        <div class="winners-title-sub">Winners</div>
+      </div>
+      <div class="podium-container" id="podiumContainer">
+        <!-- Winners will be dynamically inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-left-container">
+    <div class="qr-code-container">
+      <img src="twilio_whatsapp_qr.png" alt="WhatsApp QR Code">
+    </div>
+    <div class="icon-row">
+      <div class="twilio-filter-logo" onclick="toggleInternals()" id="twilioFilterLogo" title="Click to filter Twilio internal users">
+        <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="30" cy="30" r="28" fill="none" stroke="white" stroke-width="2"/>
+          <circle cx="21" cy="21" r="5" fill="white"/>
+          <circle cx="39" cy="21" r="5" fill="white"/>
+          <circle cx="21" cy="39" r="5" fill="white"/>
+          <circle cx="39" cy="39" r="5" fill="white"/>
+        </svg>
+      </div>
+      <div class="simulation-toggle" onclick="toggleSimulation()" id="simulationToggle" title="Click to start simulation mode">
+        🤖
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
+  <script>
+    // Configuration - UPDATE THIS VALUE AFTER DEPLOYMENT
+    const TWILIO_FUNCTIONS_BASE_URL = 'https://YOUR-SERVICE-NAME.twil.io'; // Replace with your deployed Twilio Functions URL
+
+    // Country coordinates (approximate centers)
+    const countryCoords = {
+      'US': [37.0902, -95.7129],
+      'CA': [56.1304, -106.3468],
+      'MX': [23.6345, -102.5528],
+      'BR': [-14.2350, -51.9253],
+      'AR': [-38.4161, -63.6167],
+      'GB': [55.3781, -3.4360],
+      'FR': [46.2276, 2.2137],
+      'DE': [51.1657, 10.4515],
+      'IT': [41.8719, 12.5674],
+      'ES': [40.4637, -3.7492],
+      'NL': [52.1326, 5.2913],
+      'BE': [50.5039, 4.4699],
+      'CH': [46.8182, 8.2275],
+      'AT': [47.5162, 14.5501],
+      'SE': [60.1282, 18.6435],
+      'NO': [60.4720, 8.4689],
+      'DK': [56.2639, 9.5018],
+      'FI': [61.9241, 25.7482],
+      'PL': [51.9194, 19.1451],
+      'RU': [61.5240, 105.3188],
+      'CN': [35.8617, 104.1954],
+      'JP': [36.2048, 138.2529],
+      'KR': [35.9078, 127.7669],
+      'IN': [20.5937, 78.9629],
+      'AU': [-25.2744, 133.7751],
+      'NZ': [-40.9006, 174.8860],
+      'ZA': [-30.5595, 22.9375],
+      'EG': [26.8206, 30.8025],
+      'NG': [9.0820, 8.6753],
+      'KE': [-0.0236, 37.9062],
+      'SG': [1.3521, 103.8198],
+      'MY': [4.2105, 101.9758],
+      'TH': [15.8700, 100.9925],
+      'VN': [14.0583, 108.2772],
+      'PH': [12.8797, 121.7740],
+      'ID': [-0.7893, 113.9213],
+      'AE': [23.4241, 53.8478],
+      'SA': [23.8859, 45.0792],
+      'IL': [31.0461, 34.8516],
+      'TR': [38.9637, 35.2433],
+      'GR': [39.0742, 21.8243],
+      'PT': [39.3999, -8.2245],
+      'IE': [53.4129, -8.2439],
+      'CZ': [49.8175, 15.4730],
+      'HU': [47.1625, 19.5033],
+      'RO': [45.9432, 24.9668],
+      'BG': [42.7339, 25.4858],
+      'UA': [48.3794, 31.1656],
+      'CL': [-35.6751, -71.5430],
+      'PE': [-9.1900, -75.0152],
+      'CO': [4.5709, -74.2973],
+      'VE': [6.4238, -66.5897]
+    };
+
+    let map;
+    let previousStamps = [];
+    let previousCollectors = []; // Track collector IDs to detect new activations
+    let fireworksContext;
+    let fireworksParticles = [];
+    let collectorMarkers = {}; // Track collector markers by ID
+    let stampMarkers = {}; // Track stamp markers by unique key
+    let arcLines = []; // Track arc lines for fading
+    let countryOffsets = {}; // Track offsets for same country collectors
+    let lastMaxStamps = 0; // Track max stamps for gold highlighting
+    let isInitialLoad = true;
+    let allDotPositions = []; // Track all dot positions to prevent overlap
+    let hideInternals = false;
+    let cachedMapData = null;
+    let cachedLeaderboard = null;
+    let stampsRequired = 10; // Default, updated from API
+    let gameActive = true; // Track game status
+    let winnersDisplayed = false; // Track if winners are currently shown
+    let firstLoad = true; // Track if this is the first data load
+    let audioUnlocked = false; // Track if audio has been unlocked
+
+    // Simulation state
+    let simulationActive = false;
+    let simulatedUsers = [];
+    let simulatedStamps = [];
+    let simulationTimers = [];
+    let userGenerationTimer = null;
+    let lastFireworksTime = 0;
+    const FIREWORKS_THROTTLE = 5000; // 5 seconds
+
+    // Data pools for simulation
+    const firstNames = ['Alex', 'Sofia', 'Chen', 'Priya', 'Mohammed', 'Emma', 'Lucas', 'Yuki', 'Aisha', 'Diego',
+                        'Nina', 'Raj', 'Isabella', 'Omar', 'Mei', 'Carlos', 'Zara', 'Liam', 'Fatima', 'Jin',
+                        'Anna', 'Hassan', 'Lily', 'Marco', 'Amara', 'Noah', 'Leila', 'Ethan', 'Suki', 'Mateo'];
+
+    const lastNames = ['Smith', 'Garcia', 'Lee', 'Patel', 'Ahmed', 'Johnson', 'Rodriguez', 'Chen', 'Brown', 'Wilson',
+                       'Martinez', 'Kim', 'Taylor', 'Anderson', 'Singh', 'Thomas', 'Jackson', 'White', 'Lopez', 'Harris',
+                       'Wang', 'Martin', 'Thompson', 'Gonzalez', 'Clark', 'Lewis', 'Walker', 'Hall', 'Allen', 'Young'];
+
+    const availableCountries = Object.keys(countryCoords);
+
+    // Initialize map
+    function initMap() {
+      console.log('Initializing map...');
+
+      map = L.map('map', {
+        center: [20, 0],
+        zoom: 2,
+        minZoom: 2,
+        maxZoom: 8,
+        zoomControl: true,
+        zoomDelta: 0.5,
+        zoomSnap: 0.5,
+        wheelPxPerZoomLevel: 120,
+        worldCopyJump: true
+      });
+
+      console.log('Map object created:', map);
+
+      // Dark theme tiles from CartoDB
+      const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+      });
+
+      tileLayer.on('tileerror', function(error, tile) {
+        console.error('Tile loading error:', error, tile);
+      });
+
+      tileLayer.on('load', function() {
+        console.log('Map tiles loaded');
+      });
+
+      tileLayer.addTo(map);
+      console.log('Tile layer added to map');
+
+      // Force map to recalculate size
+      setTimeout(() => {
+        map.invalidateSize();
+        console.log('Map size invalidated');
+
+        // Hide loading indicator
+        const loadingEl = document.getElementById('loadingIndicator');
+        if (loadingEl) {
+          loadingEl.style.display = 'none';
+        }
+      }, 1000);
+
+      // Initialize fireworks canvas
+      const canvas = document.getElementById('fireworks');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      fireworksContext = canvas.getContext('2d');
+
+      window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      });
+
+      animateFireworks();
+    }
+
+    // Check if a position overlaps with existing dots
+    function checkOverlap(lat, lng, minDistance = 1.5) {
+      for (const pos of allDotPositions) {
+        const latDiff = Math.abs(pos.lat - lat);
+        const lngDiff = Math.abs(pos.lng - lng);
+        const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
+
+        if (distance < minDistance) {
+          return true; // Overlap detected
+        }
+      }
+      return false; // No overlap
+    }
+
+    // Find a clear position near target coordinates
+    function findClearPosition(baseLat, baseLng, maxRadius = 10) {
+      // Try the base position first
+      if (!checkOverlap(baseLat, baseLng)) {
+        allDotPositions.push({ lat: baseLat, lng: baseLng });
+        return { lat: baseLat, lng: baseLng };
+      }
+
+      // Try positions in a spiral pattern with larger steps
+      for (let radius = 1.0; radius <= maxRadius; radius += 1.0) {
+        for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+          const lat = baseLat + Math.sin(angle) * radius;
+          const lng = baseLng + Math.cos(angle) * radius;
+
+          if (!checkOverlap(lat, lng)) {
+            allDotPositions.push({ lat, lng });
+            console.log(`Found clear position at offset radius ${radius.toFixed(1)}`);
+            return { lat, lng };
+          }
+        }
+      }
+
+      // Fallback: use base position anyway (should rarely happen with grid)
+      console.warn('Could not find clear position, using fallback');
+      allDotPositions.push({ lat: baseLat, lng: baseLng });
+      return { lat: baseLat, lng: baseLng };
+    }
+
+    // Get offset position for collectors in same country
+    function getCountryOffset(country) {
+      if (!countryOffsets[country]) {
+        countryOffsets[country] = 0;
+      }
+      const index = countryOffsets[country];
+      countryOffsets[country]++;
+
+      // Hexagonal grid pattern with larger spacing
+      const hexSpacing = 2.5; // degrees between circle centers (increased from 1.5)
+      const cols = 4; // 4 collectors per row (reduced from 6 to keep tighter)
+
+      const row = Math.floor(index / cols);
+      const col = index % cols;
+
+      // Hexagonal packing math
+      // Horizontal spacing: 1.5 * spacing (for hexagons)
+      // Vertical spacing: sqrt(3)/2 * spacing ≈ 0.866 * spacing
+      const horizontalSpacing = hexSpacing * 1.5;
+      const verticalSpacing = hexSpacing * 0.866; // sqrt(3)/2
+
+      // Calculate position relative to grid origin
+      let lng = col * horizontalSpacing;
+      let lat = row * verticalSpacing;
+
+      // Offset odd rows to create hexagonal pattern
+      if (row % 2 === 1) {
+        lng += horizontalSpacing * 0.5;
+      }
+
+      // Center the grid around (0,0) - country center
+      // This centers based on the current row and column
+      const centerOffsetLng = ((cols - 1) / 2) * horizontalSpacing;
+      const centerOffsetLat = row * verticalSpacing / 2;
+
+      lng -= centerOffsetLng;
+      lat -= centerOffsetLat;
+
+      return { lat, lng };
+    }
+
+    // Get initials from name
+    function getInitials(name) {
+      if (!name) return '??';
+      const parts = name.trim().split(' ');
+      if (parts.length === 1) {
+        return parts[0].substring(0, 2).toUpperCase();
+      }
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    // Create collector marker (red dot with initials and count)
+    function createCollectorMarker(collector, isGold = false, stampCount = 0) {
+      const coords = countryCoords[collector.country];
+      if (!coords) return null;
+
+      const offset = getCountryOffset(collector.country);
+      const finalLat = coords[0] + offset.lat;
+      const finalLng = coords[1] + offset.lng;
+
+      // Hexagonal grid guarantees no overlaps - track position for reference
+      allDotPositions.push({ lat: finalLat, lng: finalLng });
+
+      const color = isGold ? '#FFD700' : '#FF6B7A';
+      const initials = getInitials(collector.name);
+
+      const icon = L.divIcon({
+        className: 'collector-marker',
+        html: `
+          <div style="
+            background: ${color};
+            color: #000000;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            font-size: 13px;
+          ">
+            ${initials}
+          </div>
+        `,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+
+      const marker = L.marker([finalLat, finalLng], { icon: icon }).addTo(map);
+      marker.bindPopup(`
+        <div style="
+          background: rgba(28, 41, 56, 0.95);
+          color: white;
+          padding: 10px 15px;
+          border-radius: 8px;
+          font-size: 13px;
+          border: 1px solid ${color};
+        ">
+          <strong>${collector.name}</strong> (${collector.country})<br>
+          <span style="color: #9CA3AF;">Stamps: ${stampCount}</span>
+        </div>
+      `);
+
+      return { marker, coords: [finalLat, finalLng] };
+    }
+
+    // Get country flag emoji from 2-letter code
+    function getCountryFlag(countryCode) {
+      if (!countryCode || typeof countryCode !== 'string') return '';
+      const code = countryCode.toUpperCase().trim();
+      if (code.length !== 2) return '';
+      const codePoints = [...code].map(char => 127397 + char.charCodeAt(0));
+      return String.fromCodePoint(...codePoints);
+    }
+
+    // Random helper
+    function random(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function randomPick(array) {
+      return array[Math.floor(Math.random() * array.length)];
+    }
+
+    // Generate simulated user
+    function generateSimulatedUser(index) {
+      const firstName = randomPick(firstNames);
+      const lastName = randomPick(lastNames);
+      const country = randomPick(availableCountries);
+
+      return {
+        id: `sim_${index}`,
+        name: `${firstName} ${lastName}`,
+        country: country,
+        idCode: 100 + index,
+        activated: true,
+        email: null,
+        stamps: []
+      };
+    }
+
+    // Check if user can collect more stamps
+    function canCollectMore(user) {
+      const userStamps = simulatedStamps.filter(s => s.collectorId === user.id);
+      return userStamps.length < stampsRequired;
+    }
+
+    // Find valid targets for stamp collection
+    function findValidTargets(collector) {
+      // Get countries already collected
+      const collectedCountries = simulatedStamps
+        .filter(s => s.collectorId === collector.id)
+        .map(s => s.targetCountry);
+
+      // Can't collect from own country or already collected countries
+      return simulatedUsers.filter(target =>
+        target.id !== collector.id &&
+        target.country !== collector.country &&
+        !collectedCountries.includes(target.country)
+      );
+    }
+
+    // Create simulated stamp
+    function createSimulatedStamp(collector, target) {
+      const stamp = {
+        collectorId: collector.id,
+        collectorName: collector.name,
+        collectorCountry: collector.country,
+        targetId: target.id,
+        targetName: target.name,
+        targetCountry: target.country,
+        targetCode: target.idCode,
+        timestamp: new Date().toISOString()
+      };
+
+      simulatedStamps.push(stamp);
+      console.log(`[SIM] ${collector.name} collected stamp from ${target.name} (${target.country})`);
+
+      // Trigger throttled fireworks
+      triggerThrottledFireworks();
+    }
+
+    // Schedule stamp collection for a user
+    function scheduleStampCollection(user) {
+      const collectStamp = () => {
+        if (!simulationActive) return;
+        if (!canCollectMore(user)) return;
+
+        const validTargets = findValidTargets(user);
+        if (validTargets.length === 0) return;
+
+        const target = randomPick(validTargets);
+        createSimulatedStamp(user, target);
+
+        // Schedule next collection in 10-30 seconds
+        const nextDelay = random(10000, 30000);
+        const timer = setTimeout(collectStamp, nextDelay);
+        simulationTimers.push(timer);
+      };
+
+      // Start after random initial delay (0-30 seconds)
+      const initialDelay = random(0, 30000);
+      const timer = setTimeout(collectStamp, initialDelay);
+      simulationTimers.push(timer);
+    }
+
+    // Start gradual user generation
+    function startUserGeneration() {
+      let count = 0;
+      const totalUsers = 50;
+
+      userGenerationTimer = setInterval(() => {
+        if (count >= totalUsers || !simulationActive) {
+          clearInterval(userGenerationTimer);
+          console.log('[SIM] All 50 users generated');
+          return;
+        }
+
+        const user = generateSimulatedUser(count);
+        simulatedUsers.push(user);
+        scheduleStampCollection(user);
+
+        console.log(`[SIM] Generated user ${count + 1}/50: ${user.name} (${user.country})`);
+        count++;
+      }, 3000); // 1 new user every 3 seconds
+    }
+
+    // Toggle simulation
+    function toggleSimulation() {
+      simulationActive = !simulationActive;
+      const toggle = document.getElementById('simulationToggle');
+      const badge = document.getElementById('simModeBadge');
+
+      if (simulationActive) {
+        // Start simulation
+        toggle.classList.add('active');
+        badge.classList.add('active');
+        toggle.title = 'Simulation active. Click to stop.';
+
+        console.log('[SIM] Starting simulation mode...');
+        startUserGeneration();
+      } else {
+        // Stop simulation
+        toggle.classList.remove('active');
+        badge.classList.remove('active');
+        toggle.title = 'Click to start simulation mode';
+
+        // Clear all timers
+        simulationTimers.forEach(timer => clearTimeout(timer));
+        simulationTimers = [];
+        if (userGenerationTimer) {
+          clearInterval(userGenerationTimer);
+          userGenerationTimer = null;
+        }
+
+        // Clear data
+        simulatedUsers = [];
+        simulatedStamps = [];
+
+        // Clear map
+        Object.values(collectorMarkers).forEach(data => {
+          map.removeLayer(data.marker);
+        });
+        Object.values(stampMarkers).forEach(data => {
+          if (data.marker) map.removeLayer(data.marker);
+          if (data.arc && data.arc.line) map.removeLayer(data.arc.line);
+          if (data.arc && data.arc.airplane) map.removeLayer(data.arc.airplane);
+        });
+
+        collectorMarkers = {};
+        stampMarkers = {};
+        countryOffsets = {};
+        allDotPositions = [];
+
+        console.log('[SIM] Simulation stopped and cleared');
+
+        // Refresh with real data only
+        if (cachedMapData && cachedLeaderboard) {
+          updateLeaderboard(cachedLeaderboard);
+          updateMapVisualization(cachedMapData, cachedLeaderboard);
+        }
+      }
+    }
+
+    // Toggle internal users visibility
+    function toggleInternals() {
+      hideInternals = !hideInternals;
+      const logo = document.getElementById('twilioFilterLogo');
+
+      // Update visual state
+      if (hideInternals) {
+        logo.classList.add('active');
+        logo.title = 'Twilio internals hidden. Click to show.';
+      } else {
+        logo.classList.remove('active');
+        logo.title = 'Click to filter Twilio internal users';
+      }
+
+      // Clear the map and redraw
+      if (cachedMapData && cachedLeaderboard) {
+        // Remove all markers
+        Object.values(collectorMarkers).forEach(data => {
+          map.removeLayer(data.marker);
+        });
+        Object.values(stampMarkers).forEach(data => {
+          if (data.marker) map.removeLayer(data.marker);
+          if (data.arc && data.arc.line) map.removeLayer(data.arc.line);
+          if (data.arc && data.arc.airplane) map.removeLayer(data.arc.airplane);
+        });
+
+        collectorMarkers = {};
+        stampMarkers = {};
+        countryOffsets = {};
+        allDotPositions = [];
+
+        // Redraw with filtered data
+        updateLeaderboard(cachedLeaderboard);
+        updateMapVisualization(cachedMapData, cachedLeaderboard);
+      }
+    }
+
+    // Create stamp marker (white circle with flag emoji)
+    function createStampMarker(stamp, stampNumber) {
+      const coords = countryCoords[stamp.targetCountry];
+      if (!coords) return null;
+
+      // Random offset within country as base position
+      const baseLat = coords[0] + (Math.random() - 0.5) * 3;
+      const baseLng = coords[1] + (Math.random() - 0.5) * 3;
+
+      // Find a clear position without overlap
+      const clearPos = findClearPosition(baseLat, baseLng);
+
+      const flagEmoji = getCountryFlag(stamp.targetCountry);
+
+      const icon = L.divIcon({
+        className: 'stamp-marker',
+        html: `
+          <div style="
+            background: white;
+            color: black;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          ">${flagEmoji}</div>
+        `,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+      });
+
+      const marker = L.marker([clearPos.lat, clearPos.lng], { icon: icon }).addTo(map);
+      marker.bindPopup(`
+        <div style="
+          background: rgba(28, 41, 56, 0.95);
+          color: white;
+          padding: 10px 15px;
+          border-radius: 8px;
+          font-size: 13px;
+          border: 1px solid white;
+        ">
+          <strong>${flagEmoji} Stamp #${stampNumber}</strong><br>
+          <span style="color: #9CA3AF;">Collector:</span> ${stamp.collectorName} (${stamp.collectorCountry})<br>
+          <span style="color: #9CA3AF;">Visited:</span> ${stamp.targetName} (${stamp.targetCountry})
+        </div>
+      `);
+
+      return { marker, coords: [clearPos.lat, clearPos.lng] };
+    }
+
+    // Draw arc line between two points with curve
+    function drawArcLine(fromCoords, toCoords, color = '#3B82F6') {
+      // Calculate midpoint and add height for arc effect
+      const midLat = (fromCoords[0] + toCoords[0]) / 2;
+      const midLng = (fromCoords[1] + toCoords[1]) / 2;
+
+      // Calculate distance for arc height
+      const latDiff = Math.abs(fromCoords[0] - toCoords[0]);
+      const lngDiff = Math.abs(fromCoords[1] - toCoords[1]);
+      const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
+
+      // Arc height proportional to distance (creates nice curve)
+      const arcHeight = distance * 0.3;
+
+      // Create curved path with multiple points
+      const points = [];
+      const numPoints = 20;
+      for (let i = 0; i <= numPoints; i++) {
+        const t = i / numPoints;
+
+        // Quadratic bezier curve
+        const lat = (1 - t) * (1 - t) * fromCoords[0] +
+                   2 * (1 - t) * t * (midLat + arcHeight) +
+                   t * t * toCoords[0];
+        const lng = (1 - t) * (1 - t) * fromCoords[1] +
+                   2 * (1 - t) * t * midLng +
+                   t * t * toCoords[1];
+
+        points.push([lat, lng]);
+      }
+
+      const line = L.polyline(points, {
+        color: color,
+        weight: 2,
+        opacity: 0.7,
+        dashArray: '5, 10',
+        className: 'arc-line'
+      }).addTo(map);
+
+      // Calculate the actual midpoint of the arc (highest point)
+      const t = 0.5;
+      const arcMidLat = (1 - t) * (1 - t) * fromCoords[0] +
+                        2 * (1 - t) * t * (midLat + arcHeight) +
+                        t * t * toCoords[0];
+      const arcMidLng = (1 - t) * (1 - t) * fromCoords[1] +
+                        2 * (1 - t) * t * midLng +
+                        t * t * toCoords[1];
+
+      // Add airplane icon at midpoint
+      const airplaneIcon = L.divIcon({
+        className: 'airplane-icon',
+        html: '<div style="font-size: 18px; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">✈️</div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+
+      const airplaneMarker = L.marker([arcMidLat, arcMidLng], {
+        icon: airplaneIcon,
+        interactive: false
+      }).addTo(map);
+
+      // Fade out after 30 seconds
+      setTimeout(() => {
+        let opacity = 0.7;
+        const fadeInterval = setInterval(() => {
+          opacity -= 0.05;
+          if (opacity <= 0) {
+            clearInterval(fadeInterval);
+            map.removeLayer(line);
+            map.removeLayer(airplaneMarker);
+          } else {
+            line.setStyle({ opacity: opacity });
+            // Fade airplane marker too
+            const element = airplaneMarker.getElement();
+            if (element) {
+              element.style.opacity = opacity;
+            }
+          }
+        }, 100);
+      }, 30000);
+
+      return { line, airplane: airplaneMarker };
+    }
+
+    // Merge simulated data with real data
+    function mergeSimulatedData(realData) {
+      if (!simulationActive) return realData;
+
+      // Merge map data
+      const mergedMapData = {
+        collectors: [
+          ...(realData.mapData?.collectors || []),
+          ...simulatedUsers.map(u => ({
+            id: u.id,
+            name: u.name,
+            country: u.country,
+            idCode: u.idCode,
+            email: u.email
+          }))
+        ],
+        stamps: [
+          ...(realData.mapData?.stamps || []),
+          ...simulatedStamps
+        ]
+      };
+
+      // Merge leaderboard
+      const simulatedLeaderboard = simulatedUsers.map(u => {
+        const stampCount = simulatedStamps.filter(s => s.collectorId === u.id).length;
+        return {
+          name: u.name,
+          country: u.country,
+          stampCount: stampCount,
+          completed: stampCount >= stampsRequired,
+          activated: true,
+          giftRedeemed: false,
+          email: null
+        };
+      });
+
+      const mergedLeaderboard = [
+        ...(realData.leaderboard || []),
+        ...simulatedLeaderboard
+      ].sort((a, b) => b.stampCount - a.stampCount);
+
+      return {
+        ...realData,
+        mapData: mergedMapData,
+        leaderboard: mergedLeaderboard
+      };
+    }
+
+    // Fetch stats and update map
+    async function updateMap() {
+      try {
+        const response = await fetch(`${TWILIO_FUNCTIONS_BASE_URL}/get-stats`);
+        const data = await response.json();
+
+        if (data.success) {
+          // Update stamps required from API
+          if (data.stats.stampsRequired) {
+            stampsRequired = data.stats.stampsRequired;
+          }
+
+          // Check game status from API
+          if (data.gameSettings) {
+            const wasActive = gameActive;
+            gameActive = data.gameSettings.gameActive;
+
+            // On first load, just set the initial state
+            if (firstLoad) {
+              firstLoad = false;
+              // If game is already ended on page load, show winners immediately
+              if (!gameActive) {
+                showWinners(data.stats.leaderboard);
+              }
+            } else {
+              // On subsequent updates, detect state changes
+              // If game just ended, show winners
+              if (wasActive && !gameActive && !winnersDisplayed) {
+                showWinners(data.stats.leaderboard);
+              }
+
+              // If game was reactivated, hide winners
+              if (!wasActive && gameActive && winnersDisplayed) {
+                hideWinners();
+              }
+            }
+          }
+
+          // Merge with simulated data if active
+          const mergedStats = mergeSimulatedData(data.stats);
+
+          // Cache the merged data for filtering
+          cachedMapData = mergedStats.mapData;
+          cachedLeaderboard = mergedStats.leaderboard;
+
+          updateStats(mergedStats);
+          updateLeaderboard(mergedStats.leaderboard);
+          checkForNewActivations(mergedStats.mapData?.collectors || []);
+          updateMapVisualization(mergedStats.mapData, mergedStats.leaderboard);
+          checkForNewStamps(mergedStats.recentActivity);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    }
+
+    // Update map with collectors and stamps
+    function updateMapVisualization(mapData, leaderboard) {
+      if (!mapData) return;
+
+      // Filter out internal users if hideInternals is true
+      let filteredCollectors = mapData.collectors;
+      let filteredStamps = mapData.stamps;
+
+      if (hideInternals) {
+        // Filter collectors
+        filteredCollectors = mapData.collectors.filter(collector =>
+          !collector.email || !collector.email.toLowerCase().endsWith('@twilio.com')
+        );
+
+        // Get filtered collector IDs
+        const filteredCollectorIds = new Set(filteredCollectors.map(c => c.id));
+
+        // Filter stamps - only show stamps from non-internal collectors
+        filteredStamps = mapData.stamps.filter(stamp =>
+          filteredCollectorIds.has(stamp.collectorId)
+        );
+      }
+
+      // Find highest stamp count for gold highlighting
+      const maxStamps = Math.max(...leaderboard.map(l => l.stampCount), 0);
+
+      // Check if max stamps changed (need to update colors)
+      const maxStampsChanged = maxStamps !== lastMaxStamps;
+      lastMaxStamps = maxStamps;
+
+      // If max stamps changed, remove all collector markers and redraw
+      if (maxStampsChanged && !isInitialLoad) {
+        Object.values(collectorMarkers).forEach(data => {
+          map.removeLayer(data.marker);
+          // Remove from position tracking
+          allDotPositions = allDotPositions.filter(
+            pos => !(Math.abs(pos.lat - data.coords[0]) < 0.01 && Math.abs(pos.lng - data.coords[1]) < 0.01)
+          );
+        });
+        collectorMarkers = {};
+        countryOffsets = {}; // Reset offsets
+      }
+
+      // Create/update collector markers for activated users
+      filteredCollectors.forEach(collector => {
+        if (collectorMarkers[collector.id] && !maxStampsChanged) {
+          // Already on map and colors haven't changed
+          // Make sure position is tracked
+          const existing = collectorMarkers[collector.id];
+          if (!allDotPositions.some(pos =>
+            Math.abs(pos.lat - existing.coords[0]) < 0.01 &&
+            Math.abs(pos.lng - existing.coords[1]) < 0.01
+          )) {
+            allDotPositions.push({ lat: existing.coords[0], lng: existing.coords[1] });
+          }
+          return;
+        }
+
+        // Check if this collector has max stamps (gold)
+        const collectorStamps = filteredStamps.filter(s => s.collectorId === collector.id).length;
+        const isGold = collectorStamps > 0 && collectorStamps === maxStamps;
+
+        const result = createCollectorMarker(collector, isGold, collectorStamps);
+        if (result) {
+          collectorMarkers[collector.id] = {
+            marker: result.marker,
+            coords: result.coords,
+            country: collector.country,
+            stampCount: collectorStamps
+          };
+        }
+      });
+
+      // Create collector markers for stamp targets (even if they haven't activated)
+      filteredStamps.forEach(stamp => {
+        // Check if target already has a collector marker
+        if (!collectorMarkers[stamp.targetId]) {
+          // Create a collector object for the target
+          const targetCollector = {
+            id: stamp.targetId,
+            name: stamp.targetName,
+            country: stamp.targetCountry,
+            activated: false // Mark as not activated
+          };
+
+          // Count stamps for this target (they might have collected some)
+          const targetStamps = filteredStamps.filter(s => s.collectorId === stamp.targetId).length;
+          const isGold = targetStamps > 0 && targetStamps === maxStamps;
+
+          const result = createCollectorMarker(targetCollector, isGold, targetStamps);
+          if (result) {
+            collectorMarkers[stamp.targetId] = {
+              marker: result.marker,
+              coords: result.coords,
+              country: targetCollector.country,
+              stampCount: targetStamps
+            };
+          }
+        }
+      });
+
+      // Draw arc lines from collector to target for each stamp
+      filteredStamps.forEach(stamp => {
+        const collectorData = collectorMarkers[stamp.collectorId];
+        const targetData = collectorMarkers[stamp.targetId];
+
+        // Both collector and target must have circles on the map
+        if (!collectorData || !targetData) return;
+
+        // Use targetId for uniqueness (each stamp record is unique)
+        const stampKey = `${stamp.collectorId}_${stamp.targetId}_${stamp.timestamp}`;
+
+        // Check if this arc already exists
+        if (stampMarkers[stampKey]) {
+          return; // Arc already drawn
+        }
+
+        // Draw arc line from collector to target
+        const fromCoords = collectorData.coords;
+        const toCoords = targetData.coords;
+        const arcResult = drawArcLine(fromCoords, toCoords);
+
+        // Store arc reference (no marker, just the arc)
+        stampMarkers[stampKey] = {
+          arc: arcResult,
+          collectorId: stamp.collectorId,
+          targetId: stamp.targetId
+        };
+
+        console.log(`Drew arc from ${stamp.collectorName} to ${stamp.targetName}`);
+      });
+
+      isInitialLoad = false;
+    }
+
+    // Update stats bar
+    function updateStats(stats) {
+      const totalStamps = stats.totalStamps + (simulationActive ? simulatedStamps.length : 0);
+      const activeUsers = stats.activatedGuests + (simulationActive ? simulatedUsers.length : 0);
+      const completedUsers = stats.completedGuests + (simulationActive ? simulatedUsers.filter(u => {
+        return simulatedStamps.filter(s => s.collectorId === u.id).length >= stampsRequired;
+      }).length : 0);
+
+      document.getElementById('totalStamps').textContent = totalStamps;
+      document.getElementById('activeUsers').textContent = activeUsers;
+      document.getElementById('completedUsers').textContent = completedUsers;
+    }
+
+    // Update leaderboard display
+    function updateLeaderboard(leaderboard) {
+      if (!leaderboard || leaderboard.length === 0) {
+        document.getElementById('leaderboardContent').innerHTML =
+          '<div style="color: #9CA3AF; text-align: center; padding: 20px;">No activated users yet</div>';
+        return;
+      }
+
+      // Filter to only show activated users
+      let activatedUsers = leaderboard.filter(user => user.activated);
+
+      // Filter out internal Twilio users if hideInternals is true
+      if (hideInternals) {
+        activatedUsers = activatedUsers.filter(user =>
+          !user.email || !user.email.toLowerCase().endsWith('@twilio.com')
+        );
+      }
+
+      if (activatedUsers.length === 0) {
+        document.getElementById('leaderboardContent').innerHTML =
+          '<div style="color: #9CA3AF; text-align: center; padding: 20px;">No activated users yet</div>';
+        return;
+      }
+
+      // Do NOT re-sort - backend already sorts with stable tie-breaking logic
+      // Just use the order as provided by the backend
+      const leaderboardHTML = activatedUsers.map((user, index) => {
+        const rank = index + 1;
+        let rankClass = '';
+
+        if (rank === 1) {
+          rankClass = 'gold';
+        } else if (rank === 2) {
+          rankClass = 'silver';
+        } else if (rank === 3) {
+          rankClass = 'bronze';
+        }
+
+        const flagEmoji = getCountryFlag(user.country);
+
+        return `
+          <div class="leaderboard-item">
+            <div class="leaderboard-rank ${rankClass}">${rank}</div>
+            <div class="leaderboard-flag">${flagEmoji}</div>
+            <div class="leaderboard-info">
+              <div class="leaderboard-name">${user.name}</div>
+              <div class="leaderboard-country">- ${user.country}</div>
+            </div>
+            <div class="leaderboard-stamps">${user.stampCount}</div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('leaderboardContent').innerHTML = leaderboardHTML;
+    }
+
+    // Check for new activations and animate
+    function checkForNewActivations(collectors) {
+      if (!collectors || collectors.length === 0) return;
+
+      // Get current collector IDs
+      const currentCollectorIds = collectors.map(c => c.id);
+
+      // Check for new collectors we haven't seen before
+      // Only check if we have previous collectors to compare against (skip initial load)
+      if (previousCollectors.length > 0) {
+        const newCollectors = currentCollectorIds.filter(id => !previousCollectors.includes(id));
+
+        if (newCollectors.length > 0) {
+          // NEW ACTIVATION! Trigger fireworks
+          console.log('New activation detected!', newCollectors);
+          triggerThrottledFireworks();
+        }
+      } else {
+        console.log('Initial load - skipping fireworks for existing collectors');
+      }
+
+      // Update previous collectors list
+      previousCollectors = currentCollectorIds;
+    }
+
+    // Check for new stamps and animate
+    function checkForNewStamps(recentActivity) {
+      if (!recentActivity || recentActivity.length === 0) return;
+
+      // Get latest stamp
+      const latestStamp = recentActivity[0];
+      const stampId = `${latestStamp.collectorName}_${latestStamp.collectedCode}_${latestStamp.timestamp}`;
+
+      // Check if this is a new stamp we haven't seen
+      if (previousStamps.length > 0 && !previousStamps.includes(stampId)) {
+        // NEW STAMP! Trigger fireworks
+        console.log('New stamp detected!', latestStamp);
+        triggerThrottledFireworks();
+
+        // Note: The full map visualization will update on next poll cycle
+        // This just triggers the fireworks celebration
+      }
+
+      // Update previous stamps list (keep last 10)
+      previousStamps = recentActivity.slice(0, 10).map(s =>
+        `${s.collectorName}_${s.collectedCode}_${s.timestamp}`
+      );
+    }
+
+    // Throttled fireworks trigger
+    function triggerThrottledFireworks() {
+      const now = Date.now();
+      if (now - lastFireworksTime < FIREWORKS_THROTTLE) {
+        console.log('[FIREWORKS] Throttled - too soon');
+        return;
+      }
+
+      lastFireworksTime = now;
+      triggerFireworks();
+    }
+
+    // Unlock audio on first user interaction
+    function unlockAudio() {
+      if (audioUnlocked) return;
+
+      const fireworksAudio = document.getElementById('fireworksSound');
+      const celebrationAudio = document.getElementById('celebrationSound');
+
+      // Play and immediately pause both audio elements to unlock them
+      const unlockPromises = [];
+
+      if (fireworksAudio) {
+        fireworksAudio.volume = 0;
+        unlockPromises.push(fireworksAudio.play().then(() => {
+          fireworksAudio.pause();
+          fireworksAudio.currentTime = 0;
+          fireworksAudio.volume = 0.6;
+        }).catch(() => {}));
+      }
+
+      if (celebrationAudio) {
+        celebrationAudio.volume = 0;
+        unlockPromises.push(celebrationAudio.play().then(() => {
+          celebrationAudio.pause();
+          celebrationAudio.currentTime = 0;
+          celebrationAudio.volume = 0.6;
+        }).catch(() => {}));
+      }
+
+      Promise.all(unlockPromises).then(() => {
+        audioUnlocked = true;
+        console.log('Audio unlocked successfully');
+      });
+    }
+
+    // Play sound effect
+    function playSound(soundId) {
+      try {
+        const audio = document.getElementById(soundId);
+        if (!audio) {
+          console.error(`Audio element ${soundId} not found`);
+          return;
+        }
+
+        console.log(`Playing sound: ${soundId}, audioUnlocked: ${audioUnlocked}`);
+        audio.currentTime = 0; // Reset to start
+        audio.volume = 0.6; // 60% volume
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log(`${soundId} played successfully`);
+            })
+            .catch(err => {
+              console.error(`Audio play failed for ${soundId}:`, err.message);
+            });
+        }
+      } catch (error) {
+        console.error('Error playing sound:', error);
+      }
+    }
+
+    // Fireworks animation
+    function triggerFireworks() {
+      const colors = ['#F22F46', '#FF6B6B', '#FFD700', '#00D9FF', '#7B68EE', '#FF1493'];
+
+      // Play fireworks sound
+      playSound('fireworksSound');
+
+      // Launch 5 fireworks
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          launchFirework(colors[Math.floor(Math.random() * colors.length)]);
+        }, i * 200);
+      }
+    }
+
+    function launchFirework(color) {
+      const x = Math.random() * window.innerWidth;
+      const y = Math.random() * (window.innerHeight * 0.4) + (window.innerHeight * 0.1);
+
+      // Create 50 particles per firework
+      for (let i = 0; i < 50; i++) {
+        fireworksParticles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          life: 100,
+          color: color
+        });
+      }
+    }
+
+    function animateFireworks() {
+      // Clear canvas with transparency (don't paint over map)
+      fireworksContext.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      fireworksParticles = fireworksParticles.filter(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.1; // gravity
+        p.life -= 2;
+
+        if (p.life > 0) {
+          fireworksContext.fillStyle = p.color;
+          fireworksContext.globalAlpha = p.life / 100;
+          fireworksContext.fillRect(p.x, p.y, 3, 3);
+          return true;
+        }
+        return false;
+      });
+
+      fireworksContext.globalAlpha = 1;
+      requestAnimationFrame(animateFireworks);
+    }
+
+    // Show winners overlay
+    function showWinners(leaderboard) {
+      if (!leaderboard || leaderboard.length === 0) {
+        console.log('No leaderboard data to show winners');
+        return;
+      }
+
+      // Filter to only activated users
+      let activatedUsers = leaderboard.filter(user => user.activated);
+
+      // Filter out internals if hideInternals is true
+      if (hideInternals) {
+        activatedUsers = activatedUsers.filter(user =>
+          !user.email || !user.email.toLowerCase().endsWith('@twilio.com')
+        );
+      }
+
+      // Get top 3
+      const topThree = activatedUsers.slice(0, 3);
+
+      if (topThree.length === 0) {
+        console.log('No activated users to show as winners');
+        return;
+      }
+
+      // Build podium HTML - order is 2nd, 1st, 3rd for visual effect
+      const podiumContainer = document.getElementById('podiumContainer');
+      let podiumHTML = '';
+
+      // 2nd place (if exists)
+      if (topThree[1]) {
+        podiumHTML += createWinnerCard(topThree[1], 2, 'second');
+      }
+
+      // 1st place
+      if (topThree[0]) {
+        podiumHTML += createWinnerCard(topThree[0], 1, 'first');
+      }
+
+      // 3rd place (if exists)
+      if (topThree[2]) {
+        podiumHTML += createWinnerCard(topThree[2], 3, 'third');
+      }
+
+      podiumContainer.innerHTML = podiumHTML;
+
+      // Show overlay
+      const overlay = document.getElementById('winnersOverlay');
+      overlay.classList.add('show');
+      winnersDisplayed = true;
+
+      // Play celebration sound
+      playSound('celebrationSound');
+
+      console.log('Winners overlay displayed');
+    }
+
+    // Create winner card HTML
+    function createWinnerCard(winner, rank, className) {
+      const medals = ['🥇', '🥈', '🥉'];
+      const rankText = ['1ST', '2ND', '3RD'];
+      const flagEmoji = getCountryFlag(winner.country);
+
+      return `
+        <div class="winner-card ${className}">
+          <div class="winner-medal">${medals[rank - 1]}</div>
+          <div class="winner-rank">${rankText[rank - 1]} PLACE</div>
+          <div class="winner-flag">${flagEmoji}</div>
+          <div class="winner-name">${winner.name}</div>
+          <div class="winner-country">${winner.country}</div>
+          <div class="winner-stamps">
+            <span class="stamp-icon">🎫</span>
+            <span>${winner.stampCount} Stamps</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // Hide winners overlay
+    function hideWinners() {
+      const overlay = document.getElementById('winnersOverlay');
+      overlay.classList.remove('show');
+      winnersDisplayed = false;
+      console.log('Winners overlay hidden');
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      updateMap();
+
+      // Poll for updates every 3 seconds
+      setInterval(updateMap, 3000);
+
+      // Unlock audio on first user interaction
+      const unlockEvents = ['click', 'touchstart', 'keydown'];
+      const unlockAudioOnce = () => {
+        unlockAudio();
+        unlockEvents.forEach(event => {
+          document.removeEventListener(event, unlockAudioOnce);
+        });
+      };
+
+      unlockEvents.forEach(event => {
+        document.addEventListener(event, unlockAudioOnce);
+      });
+    });
+  </script>
+</body>
+</html>

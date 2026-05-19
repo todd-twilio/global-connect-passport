@@ -1,0 +1,289 @@
+{
+  "description": "Global Connect Passport - SMS Flow",
+  "states": [
+    {
+      "name": "Trigger",
+      "type": "trigger",
+      "transitions": [
+        {
+          "event": "incomingMessage",
+          "next": "parse_message"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "name": "parse_message",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "validate_stamp"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "key": "sender_phone",
+            "value": "{{trigger.message.From}}"
+          },
+          {
+            "key": "message_body",
+            "value": "{{trigger.message.Body}}"
+          }
+        ],
+        "offset": {
+          "x": 0,
+          "y": 200
+        }
+      }
+    },
+    {
+      "name": "validate_stamp",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "event": "success",
+          "next": "check_action"
+        },
+        {
+          "event": "failed",
+          "next": "system_error"
+        }
+      ],
+      "properties": {
+        "method": "POST",
+        "content_type": "application/x-www-form-urlencoded;charset=utf-8",
+        "url": "https://YOUR-SERVICE-NAME.twil.io/validate-stamp",
+        "parameters": [
+          {
+            "key": "collectorPhone",
+            "value": "{{widgets.parse_message.sender_phone}}"
+          },
+          {
+            "key": "targetCode",
+            "value": "{{widgets.parse_message.message_body}}"
+          }
+        ],
+        "offset": {
+          "x": 0,
+          "y": 400
+        }
+      }
+    },
+    {
+      "name": "check_action",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "event": "noMatch",
+          "next": "system_error"
+        },
+        {
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "activate",
+              "arguments": ["{{widgets.validate_stamp.parsed.action}}"],
+              "type": "equal_to",
+              "value": "activate"
+            }
+          ],
+          "next": "send_activation"
+        },
+        {
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "stamp_collected",
+              "arguments": ["{{widgets.validate_stamp.parsed.action}}"],
+              "type": "equal_to",
+              "value": "stamp_collected"
+            }
+          ],
+          "next": "check_completion"
+        },
+        {
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "error",
+              "arguments": ["{{widgets.validate_stamp.parsed.action}}"],
+              "type": "equal_to",
+              "value": "error"
+            }
+          ],
+          "next": "send_error"
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.validate_stamp.parsed.action}}",
+        "offset": {
+          "x": 0,
+          "y": 600
+        }
+      }
+    },
+    {
+      "name": "send_activation",
+      "type": "send-message",
+      "transitions": [
+        {
+          "event": "sent",
+          "next": "end"
+        }
+      ],
+      "properties": {
+        "body": "Welcome, {{widgets.validate_stamp.parsed.collector.name}}! Your passport is active. Meet 5 people from different countries to unlock your 'Global Artist' tile and a gift. Just text their 4-digit badge codes to me!",
+        "to": "{{widgets.parse_message.sender_phone}}",
+        "from": "{{flow.channel.address}}",
+        "offset": {
+          "x": -400,
+          "y": 800
+        }
+      }
+    },
+    {
+      "name": "check_completion",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "event": "noMatch",
+          "next": "send_to_collector"
+        },
+        {
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "is_complete",
+              "arguments": ["{{widgets.validate_stamp.parsed.isComplete}}"],
+              "type": "equal_to",
+              "value": "true"
+            }
+          ],
+          "next": "send_completion"
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.validate_stamp.parsed.isComplete}}",
+        "offset": {
+          "x": 0,
+          "y": 800
+        }
+      }
+    },
+    {
+      "name": "send_to_collector",
+      "type": "send-message",
+      "transitions": [
+        {
+          "event": "sent",
+          "next": "send_to_target"
+        }
+      ],
+      "properties": {
+        "body": "Stamp Collected! You just met {{widgets.validate_stamp.parsed.target.name}} ({{widgets.validate_stamp.parsed.target.country}}). {{widgets.validate_stamp.parsed.target.linkedin}} ({{widgets.validate_stamp.parsed.newStampCount}}/5 Stamps Collected)",
+        "to": "{{widgets.parse_message.sender_phone}}",
+        "from": "{{flow.channel.address}}",
+        "offset": {
+          "x": 200,
+          "y": 1200
+        }
+      }
+    },
+    {
+      "name": "send_to_target",
+      "type": "send-message",
+      "transitions": [
+        {
+          "event": "sent",
+          "next": "end"
+        }
+      ],
+      "properties": {
+        "body": "Your code was just collected by {{widgets.validate_stamp.parsed.collector.name}} ({{widgets.validate_stamp.parsed.collector.country}})! {{widgets.validate_stamp.parsed.collector.linkedin}}",
+        "to": "{{widgets.validate_stamp.parsed.target.phone}}",
+        "from": "{{flow.channel.address}}",
+        "offset": {
+          "x": 200,
+          "y": 1400
+        }
+      }
+    },
+    {
+      "name": "send_completion",
+      "type": "send-message",
+      "transitions": [
+        {
+          "event": "sent",
+          "next": "send_to_target"
+        }
+      ],
+      "properties": {
+        "body": "Passport Validated! You've traveled the world tonight. Head to the Global Art Wall, grab a tile for your industry basket, add your company name and country using the markers and add your mark to our collective masterpiece. Show this text to the attendant for your gift!",
+        "to": "{{widgets.parse_message.sender_phone}}",
+        "from": "{{flow.channel.address}}",
+        "offset": {
+          "x": -200,
+          "y": 1000
+        }
+      }
+    },
+    {
+      "name": "send_error",
+      "type": "send-message",
+      "transitions": [
+        {
+          "event": "sent",
+          "next": "end"
+        }
+      ],
+      "properties": {
+        "body": "{{widgets.validate_stamp.parsed.error}}",
+        "to": "{{widgets.parse_message.sender_phone}}",
+        "from": "{{flow.channel.address}}",
+        "offset": {
+          "x": 400,
+          "y": 800
+        }
+      }
+    },
+    {
+      "name": "system_error",
+      "type": "send-message",
+      "transitions": [
+        {
+          "event": "sent",
+          "next": "end"
+        }
+      ],
+      "properties": {
+        "body": "System error. Please try again or contact an attendant.",
+        "to": "{{widgets.parse_message.sender_phone}}",
+        "from": "{{flow.channel.address}}",
+        "offset": {
+          "x": 400,
+          "y": 1000
+        }
+      }
+    },
+    {
+      "name": "end",
+      "type": "end",
+      "properties": {
+        "offset": {
+          "x": 0,
+          "y": 1600
+        }
+      }
+    }
+  ],
+  "initial_state": "Trigger",
+  "flags": {
+    "allow_concurrent_calls": true
+  }
+}

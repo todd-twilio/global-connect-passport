@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Connect Passport - Admin Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #121C2D;
+      padding: 0;
+      min-height: 100vh;
+      color: #E5E7EB;
+    }
+
+    .header {
+      background: #1C2938;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      height: 80px;
+    }
+
+    .header-title {
+      color: white;
+      font-size: 1.8em;
+      font-weight: 600;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px 20px 20px;
+    }
+
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: #1C2938;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 1px solid #2A3B4D;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #F22F46;
+    }
+
+    .stat-label {
+      color: #9CA3AF;
+      margin-top: 5px;
+      font-size: 0.9em;
+    }
+
+    .section {
+      background: #1C2938;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 1px solid #2A3B4D;
+    }
+
+    .section h2 {
+      margin-bottom: 20px;
+      color: #F3F4F6;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600;
+      transition: all 0.3s;
+      color: #1F2937;
+    }
+
+    .btn-primary {
+      background: #F22F46;
+      color: #1F2937;
+    }
+
+    .btn-primary:hover {
+      background: #D9283E;
+    }
+
+    .btn-danger {
+      background: #F22F46;
+      color: #1F2937;
+    }
+
+    .btn-danger:hover {
+      background: #D9283E;
+    }
+
+    .btn-warning {
+      background: #F22F46;
+      color: #1F2937;
+    }
+
+    .btn-warning:hover {
+      background: #D9283E;
+    }
+
+    .btn-success {
+      background: #F22F46;
+      color: #1F2937;
+      padding: 8px 16px;
+      font-size: 0.9em;
+    }
+
+    .btn-success:hover {
+      background: #D9283E;
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #2A3B4D;
+    }
+
+    th {
+      background: #0F1923;
+      font-weight: 600;
+      color: #F3F4F6;
+    }
+
+    tr:hover {
+      background: rgba(242, 47, 70, 0.05);
+    }
+
+    .activity-item {
+      padding: 12px;
+      border-bottom: 1px solid #2A3B4D;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .timestamp {
+      color: #9CA3AF;
+      font-size: 0.85em;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #6B7280;
+    }
+
+    .error {
+      background: rgba(242, 47, 70, 0.1);
+      color: #F87171;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(242, 47, 70, 0.2);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10B981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-warning {
+      background: rgba(251, 191, 36, 0.15);
+      color: #FBBF24;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .badge-inactive {
+      background: rgba(107, 114, 128, 0.15);
+      color: #9CA3AF;
+      border: 1px solid rgba(107, 114, 128, 0.3);
+    }
+
+    .badge-available {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10B981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-redeemed {
+      background: rgba(139, 92, 246, 0.15);
+      color: #8B5CF6;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .auto-refresh {
+      color: #9CA3AF;
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 0.9em;
+    }
+
+    input[type="text"] {
+      background: #0F1923;
+      border: 1px solid #2A3B4D;
+      color: white;
+      padding: 12px;
+      border-radius: 6px;
+    }
+
+    input[type="text"]::placeholder {
+      color: #6B7280;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #F22F46;
+    }
+
+    .btn-with-status {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 20px;
+      gap: 2px;
+      min-height: 46px;
+      line-height: 1.2;
+    }
+
+    .btn-main-text {
+      font-size: 1em;
+      font-weight: 600;
+    }
+
+    .btn-status-text {
+      font-size: 0.75em;
+      font-weight: 500;
+      color: #1F2937;
+      line-height: 1;
+    }
+
+    .btn-status-text.status-active {
+      color: #065F46;
+    }
+
+    .btn-status-text.status-ended {
+      color: #991B1B;
+    }
+
+    .btn-status-text.status-sent {
+      color: #065F46;
+    }
+
+    .btn-status-text.status-not-sent {
+      color: #374151;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .summary-result {
+      margin-top: 15px;
+      padding: 15px;
+      background: #0F1923;
+      border-radius: 6px;
+    }
+
+    .spinner {
+      border: 3px solid #2A3B4D;
+      border-top: 3px solid #F22F46;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error-details {
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .error-item {
+      padding: 8px;
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+      font-size: 0.9em;
+    }
+
+    .error-item:last-child {
+      border-bottom: none;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #1C2938;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 1px solid #2A3B4D;
+    }
+
+    .modal-content h3 {
+      margin-bottom: 15px;
+      color: #F3F4F6;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    /* Tab Styles */
+    .tab-btn {
+      padding: 8px 16px;
+      background: #374151;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .tab-btn:hover {
+      background: #4B5563;
+    }
+
+    .tab-btn.active {
+      background: #F22F46;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .error-log-container {
+      border: 1px solid #374151;
+      border-radius: 8px;
+      background: #1F2937;
+    }
+
+    .error-log-container table {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <svg class="logo" viewBox="0 0 240 60" xmlns="http://www.w3.org/2000/svg">
+      <!-- Twilio dots logo -->
+      <circle cx="30" cy="30" r="28" fill="none" stroke="#F22F46" stroke-width="2"/>
+      <circle cx="21" cy="21" r="5" fill="#F22F46"/>
+      <circle cx="39" cy="21" r="5" fill="#F22F46"/>
+      <circle cx="21" cy="39" r="5" fill="#F22F46"/>
+      <circle cx="39" cy="39" r="5" fill="#F22F46"/>
+      <!-- Twilio text -->
+      <text x="70" y="40" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" font-weight="700" fill="#F22F46">twilio</text>
+    </svg>
+    <div class="header-title">Global Connect Passport Admin Dashboard</div>
+  </div>
+
+  <div class="container">
+    <div class="auto-refresh" id="autoRefresh">Auto-refresh in 30s</div>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-value" id="totalGuests">-</div>
+        <div class="stat-label">Total Guests</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="activatedGuests">-</div>
+        <div class="stat-label">Activated</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalStamps">-</div>
+        <div class="stat-label">Stamps Collected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="completedGuests">-</div>
+        <div class="stat-label" id="completedLabel">Completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="giftsRedeemed">-</div>
+        <div class="stat-label">Gifts Redeemed</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Controls</h2>
+      <div class="controls">
+        <button class="btn btn-primary" onclick="refreshData()">Refresh Now</button>
+        <button class="btn btn-warning" onclick="toggleInternals()" id="toggleInternalsBtn">Remove Internals</button>
+        <button class="btn btn-danger btn-with-status" onclick="endGame()" id="endGameBtn">
+          <div class="btn-main-text">End Game</div>
+          <div class="btn-status-text" id="gameStatusText">Loading...</div>
+        </button>
+        <button class="btn btn-primary btn-with-status" onclick="sendSummaries()" id="sendSummariesBtn" title="">
+          <div class="btn-main-text">Send User List</div>
+          <div class="btn-status-text" id="summaryStatusText">Loading...</div>
+        </button>
+        <button class="btn btn-danger" onclick="resetGame()">Reset Game</button>
+        <a href="map-dashboard.html" class="btn btn-primary" style="text-decoration: none; display: inline-block;" target="_blank">🌍 Live Map</a>
+      </div>
+    </div>
+
+    <div id="summaryResult"></div>
+
+    <div class="section">
+      <h2>Leaderboard</h2>
+      <table id="leaderboardTable">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Country</th>
+            <th>Stamps</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <tr><td colspan="5" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Pending Gift Redemptions</h2>
+      <table id="redemptionsTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Country</th>
+            <th>Stamps</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="redemptionsBody">
+          <tr><td colspan="4" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2>Activity & Errors</h2>
+        <div class="tab-buttons" style="display: flex; gap: 8px;">
+          <button class="tab-btn active" onclick="switchTab('activity')">Recent Activity</button>
+          <button class="tab-btn" onclick="switchTab('errors')">Errors</button>
+        </div>
+      </div>
+
+      <!-- Recent Activity Tab -->
+      <div id="activityTab" class="tab-content" style="display: block;">
+        <div id="recentActivity">
+          <div class="loading">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Errors Tab -->
+      <div id="errorsTab" class="tab-content" style="display: none;">
+        <div class="error-log-container" style="max-height: 600px; overflow-y: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Guest</th>
+                <th>Error Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody id="errorLogBody">
+              <tr><td colspan="4" class="loading">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Details Modal -->
+  <div id="errorModal" class="modal">
+    <div class="modal-content">
+      <h3>Failed Messages</h3>
+      <div id="errorList"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeErrorModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration - UPDATE THESE VALUES AFTER DEPLOYMENT
+    const TWILIO_FUNCTIONS_BASE_URL = 'https://YOUR-SERVICE-NAME.twil.io'; // Replace with your deployed Twilio Functions URL
+    const RESET_CONFIRM_CODE = 'your_secret_code'; // Change this to your secret reset code from .env
+
+    let autoRefreshInterval;
+    let countdownInterval;
+    let hideInternals = false;
+    let cachedStats = null;
+    let gameSettings = null;
+
+    // Toggle internal users visibility
+    function toggleInternals() {
+      hideInternals = !hideInternals;
+      const btn = document.getElementById('toggleInternalsBtn');
+      btn.textContent = hideInternals ? 'Show Internals' : 'Remove Internals';
+      btn.className = hideInternals ? 'btn btn-success' : 'btn btn-warning';
+
+      // Re-render with cached stats
+      if (cachedStats) {
+        updateDashboard(cachedStats);
+      }
+    }
+
+    // Switch between Activity and Errors tabs
+    function switchTab(tab) {
+      // Update buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+
+      // Update content
+      if (tab === 'activity') {
+        document.getElementById('activityTab').style.display = 'block';
+        document.getElementById('errorsTab').style.display = 'none';
+      } else {
+        document.getElementById('activityTab').style.display = 'none';
+        document.getElementById('errorsTab').style.display = 'block';
+      }
+    }
+
+    // Format error type for display
+    function formatErrorType(type) {
+      const types = {
+        'rate_limited': 'Rate Limited',
+        'channel_disabled': 'Channel Disabled',
+        'invalid_code': 'Invalid Code',
+        'duplicate_stamp': 'Duplicate',
+        'not_registered': 'Not Registered',
+        'not_activated': 'Not Activated',
+        'invalid_format': 'Invalid Format',
+        'already_activated': 'Already Active'
+      };
+      return types[type] || type;
+    }
+
+    // Get badge class for error type
+    function getErrorTypeClass(type) {
+      if (type === 'rate_limited') return 'badge-warning';
+      if (type === 'channel_disabled') return 'badge-inactive';
+      if (type === 'invalid_code' || type === 'invalid_format') return 'badge-available';
+      if (type === 'duplicate_stamp') return 'badge-warning';
+      return 'badge-inactive';
+    }
+
+    // Update error log table
+    function updateErrorLog(errorLog) {
+      const tbody = document.getElementById('errorLogBody');
+
+      if (!errorLog || errorLog.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No errors logged</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = errorLog.map(error => {
+        const time = new Date(error.timestamp).toLocaleString();
+        const errorTypeClass = getErrorTypeClass(error.errorType);
+        const displayName = error.guestName !== 'Unknown' ? error.guestName : error.phone;
+
+        return `
+          <tr>
+            <td>${time}</td>
+            <td>${displayName}</td>
+            <td><span class="badge ${errorTypeClass}">${formatErrorType(error.errorType)}</span></td>
+            <td>${error.message}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Fetch stats from Twilio Function
+    async function fetchStats() {
+      try {
+        const response = await fetch(`${TWILIO_FUNCTIONS_BASE_URL}/get-stats`);
+        const data = await response.json();
+
+        if (data.success) {
+          updateDashboard(data.stats);
+
+          // Update error log
+          if (data.stats.errorLog) {
+            updateErrorLog(data.stats.errorLog);
+          }
+
+          // Update game settings if available
+          if (data.gameSettings) {
+            gameSettings = data.gameSettings;
+            updateGameStatus();
+            updateSummaryStatus();
+          }
+        } else {
+          showError('Failed to load stats');
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+        showError('Network error');
+      }
+    }
+
+    // Update dashboard with stats
+    function updateDashboard(stats) {
+      // Cache stats for filtering
+      cachedStats = stats;
+
+      // Filter out internal users if hideInternals is true
+      let leaderboard = stats.leaderboard;
+      let pendingRedemptions = stats.pendingRedemptions;
+
+      if (hideInternals) {
+        leaderboard = stats.leaderboard.filter(guest =>
+          !guest.email || !guest.email.toLowerCase().endsWith('@twilio.com')
+        );
+        pendingRedemptions = stats.pendingRedemptions.filter(guest =>
+          !guest.email || !guest.email.toLowerCase().endsWith('@twilio.com')
+        );
+      }
+
+      document.getElementById('totalGuests').textContent = stats.totalGuests;
+      document.getElementById('activatedGuests').textContent = stats.activatedGuests;
+      document.getElementById('totalStamps').textContent = stats.totalStamps;
+      document.getElementById('completedGuests').textContent = stats.completedGuests;
+      document.getElementById('giftsRedeemed').textContent = stats.giftsRedeemed;
+
+      // Update completed label with stamps required
+      const stampsRequired = stats.stampsRequired || 10;
+      document.getElementById('completedLabel').textContent = `Completed (${stampsRequired}+)`;
+
+      // Update leaderboard
+      const leaderboardBody = document.getElementById('leaderboardBody');
+      leaderboardBody.innerHTML = leaderboard.map((guest, index) => {
+        // Determine status
+        let statusBadge;
+        if (!guest.activated) {
+          statusBadge = '<span class="badge badge-inactive">Not Activated</span>';
+        } else if (guest.giftRedeemed) {
+          statusBadge = '<span class="badge badge-redeemed">Gift Redeemed</span>';
+        } else if (guest.stampCount >= stampsRequired) {
+          statusBadge = '<span class="badge badge-available">Gift Available</span>';
+        } else {
+          statusBadge = '<span class="badge badge-warning">In Progress</span>';
+        }
+
+        return `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${guest.name}</td>
+            <td>${guest.country}</td>
+            <td>${guest.stampCount}</td>
+            <td>${statusBadge}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Update pending redemptions
+      const redemptionsBody = document.getElementById('redemptionsBody');
+      if (pendingRedemptions.length === 0) {
+        redemptionsBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">No pending redemptions</td></tr>';
+      } else {
+        redemptionsBody.innerHTML = pendingRedemptions.map(guest => `
+          <tr>
+            <td>${guest.name}</td>
+            <td>${guest.country}</td>
+            <td>${guest.stampCount}</td>
+            <td>
+              <button class="btn btn-success" onclick="markRedeemed('${guest.id}', '${guest.name}')">Mark Redeemed</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Update recent activity
+      const activityDiv = document.getElementById('recentActivity');
+      if (stats.recentActivity.length === 0) {
+        activityDiv.innerHTML = '<div style="text-align: center; color: #999;">No activity yet</div>';
+      } else {
+        activityDiv.innerHTML = stats.recentActivity.map(activity => {
+          // Validate timestamp
+          if (!activity.timestamp) {
+            return `
+              <div class="activity-item">
+                <div>
+                  <strong>${activity.collectorName}</strong> collected code <strong>${activity.collectedCode}</strong>
+                </div>
+                <div class="timestamp">Just now</div>
+              </div>
+            `;
+          }
+
+          const date = new Date(activity.timestamp);
+          // Check if date is valid
+          if (isNaN(date.getTime())) {
+            return `
+              <div class="activity-item">
+                <div>
+                  <strong>${activity.collectorName}</strong> collected code <strong>${activity.collectedCode}</strong>
+                </div>
+                <div class="timestamp">Recently</div>
+              </div>
+            `;
+          }
+
+          const options = {
+            timeZone: 'America/Los_Angeles',
+            month: 'numeric',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          };
+          const pacificTime = date.toLocaleString('en-US', options);
+
+          return `
+            <div class="activity-item">
+              <div>
+                <strong>${activity.collectorName}</strong> collected code <strong>${activity.collectedCode}</strong>
+              </div>
+              <div class="timestamp">${pacificTime} PT</div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Mark gift as redeemed
+    async function markRedeemed(guestId, guestName) {
+      try {
+        const response = await fetch(`${TWILIO_FUNCTIONS_BASE_URL}/mark-redemption`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `guestId=${guestId}&redeemed=true`
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          fetchStats();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (error) {
+        alert('Network error');
+      }
+    }
+
+    // Reset game
+    function resetGame() {
+      console.log('Reset button clicked');
+
+      if (!confirm('Are you sure you want to reset the entire game? This will delete all stamps and reset all guests.')) {
+        console.log('User cancelled reset');
+        return;
+      }
+
+      const confirmCode = prompt('Enter confirmation code to reset the game:');
+      console.log('Confirmation code:', confirmCode);
+
+      if (!confirmCode) {
+        alert('Reset cancelled - no confirmation code provided');
+        return;
+      }
+
+      console.log('Sending reset request...');
+
+      fetch(`${TWILIO_FUNCTIONS_BASE_URL}/reset-game`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `confirmCode=${encodeURIComponent(confirmCode)}`
+      })
+      .then(response => {
+        console.log('Reset response status:', response.status);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Reset response data:', data);
+        if (data.success) {
+          alert(data.message);
+          fetchStats();
+        } else {
+          alert('Error: ' + (data.error || 'Unknown error'));
+        }
+      })
+      .catch(error => {
+        console.error('Reset error:', error);
+        alert('Network error: ' + error.message);
+      });
+    }
+
+    // Refresh data
+    function refreshData() {
+      fetchStats();
+      resetAutoRefresh();
+    }
+
+    // Show error
+    function showError(message) {
+      // Could implement error banner here
+      console.error(message);
+    }
+
+    // Auto-refresh countdown
+    function startCountdown(seconds) {
+      // Clear any existing countdown
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+      }
+
+      let remaining = seconds;
+      const autoRefreshEl = document.getElementById('autoRefresh');
+
+      // Update immediately
+      autoRefreshEl.textContent = `Auto-refresh in ${remaining}s`;
+
+      countdownInterval = setInterval(() => {
+        remaining--;
+
+        if (remaining >= 0) {
+          autoRefreshEl.textContent = `Auto-refresh in ${remaining}s`;
+        }
+
+        if (remaining < 0) {
+          clearInterval(countdownInterval);
+          autoRefreshEl.textContent = 'Refreshing...';
+        }
+      }, 1000);
+    }
+
+    // Reset auto-refresh timer
+    function resetAutoRefresh() {
+      // Clear existing intervals
+      if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+      }
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+      }
+
+      // Start countdown immediately
+      startCountdown(30);
+
+      // Set up auto-refresh every 30 seconds
+      autoRefreshInterval = setInterval(() => {
+        fetchStats();
+        startCountdown(30);
+      }, 30000);
+    }
+
+    // Fetch game settings
+    async function fetchGameSettings() {
+      try {
+        const response = await fetch(`${TWILIO_FUNCTIONS_BASE_URL}/get-stats`);
+        const data = await response.json();
+
+        // For now, we'll fetch game settings from a separate endpoint once created
+        // Or we can add it to get-stats response
+        gameSettings = data.gameSettings || { gameActive: true, summariesSent: false };
+
+        updateGameStatus();
+        updateSummaryStatus();
+      } catch (error) {
+        console.error('Error fetching game settings:', error);
+      }
+    }
+
+    // Update game status UI
+    function updateGameStatus() {
+      const statusTextEl = document.getElementById('gameStatusText');
+      const endGameBtn = document.getElementById('endGameBtn');
+      const mainTextEl = endGameBtn.querySelector('.btn-main-text');
+
+      if (!gameSettings) {
+        statusTextEl.textContent = 'Loading...';
+        statusTextEl.className = 'btn-status-text';
+        return;
+      }
+
+      if (gameSettings.gameActive) {
+        mainTextEl.textContent = 'End Game';
+        statusTextEl.textContent = 'Active';
+        statusTextEl.className = 'btn-status-text status-active';
+        endGameBtn.className = 'btn btn-danger btn-with-status';
+        endGameBtn.disabled = false;
+      } else {
+        mainTextEl.textContent = 'Activate Game';
+        statusTextEl.textContent = 'Inactive';
+        statusTextEl.className = 'btn-status-text status-ended';
+        endGameBtn.className = 'btn btn-success btn-with-status';
+        endGameBtn.disabled = false;
+      }
+    }
+
+    // Update summary status UI
+    function updateSummaryStatus() {
+      const statusTextEl = document.getElementById('summaryStatusText');
+      const sendBtn = document.getElementById('sendSummariesBtn');
+
+      if (!gameSettings) {
+        statusTextEl.textContent = 'Loading...';
+        statusTextEl.className = 'btn-status-text';
+        sendBtn.title = '';
+        return;
+      }
+
+      if (gameSettings.summariesSent) {
+        statusTextEl.textContent = 'Sent';
+        statusTextEl.className = 'btn-status-text status-sent';
+        const sentDate = gameSettings.summariesSentAt
+          ? new Date(gameSettings.summariesSentAt).toLocaleString()
+          : 'Unknown date';
+        sendBtn.title = `Summaries sent on ${sentDate}`;
+        sendBtn.disabled = true;
+      } else {
+        statusTextEl.textContent = 'Not sent';
+        statusTextEl.className = 'btn-status-text status-not-sent';
+        sendBtn.title = '';
+        sendBtn.disabled = false;
+      }
+    }
+
+    // Toggle game function (end or reactivate)
+    async function endGame() {
+      const isActive = gameSettings && gameSettings.gameActive;
+      const action = isActive ? 'end' : 'activate';
+      const confirmMessage = isActive
+        ? 'Are you sure you want to end the game? Users will receive a game-ended message when they try to collect stamps.'
+        : 'Are you sure you want to reactivate the game? Users will be able to collect stamps again.';
+
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+
+      const endGameBtn = document.getElementById('endGameBtn');
+      const mainTextEl = endGameBtn.querySelector('.btn-main-text');
+      const statusTextEl = document.getElementById('gameStatusText');
+
+      endGameBtn.disabled = true;
+      mainTextEl.innerHTML = `<span class="spinner"></span> ${isActive ? 'Ending...' : 'Activating...'}`;
+      statusTextEl.textContent = 'Processing...';
+
+      try {
+        const response = await fetch(`${TWILIO_FUNCTIONS_BASE_URL}/end-game`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `action=${action}`
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          alert(isActive ? '✅ Game ended successfully!' : '✅ Game reactivated successfully!');
+          gameSettings = {
+            gameActive: data.gameActive,
+            endedAt: data.endedAt || null,
+            summariesSent: gameSettings.summariesSent,
+            summariesSentAt: gameSettings.summariesSentAt
+          };
+          updateGameStatus();
+        } else {
+          alert(`❌ Error: ${data.error}`);
+          endGameBtn.disabled = false;
+          updateGameStatus();
+        }
+      } catch (error) {
+        alert(`❌ Error: ${error.message}`);
+        endGameBtn.disabled = false;
+        updateGameStatus();
+      }
+    }
+
+    // Send summaries function
+    async function sendSummaries() {
+      if (!confirm('Are you sure you want to send summary messages to all activated users? This can only be done once.')) {
+        return;
+      }
+
+      const sendBtn = document.getElementById('sendSummariesBtn');
+      const mainTextEl = sendBtn.querySelector('.btn-main-text');
+      const statusTextEl = document.getElementById('summaryStatusText');
+      const resultEl = document.getElementById('summaryResult');
+
+      sendBtn.disabled = true;
+      mainTextEl.innerHTML = '<span class="spinner"></span> Sending...';
+      statusTextEl.textContent = 'Processing...';
+      statusTextEl.className = 'btn-status-text';
+      resultEl.innerHTML = '<div class="section" style="color: #9CA3AF; margin-top: 15px; padding: 15px;"><span class="spinner"></span> Sending messages to users... This may take a minute.</div>';
+
+      try {
+        const response = await fetch(`${TWILIO_FUNCTIONS_BASE_URL}/send-summaries`, {
+          method: 'POST'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          let resultHTML = '<div class="section" style="margin-top: 15px;">';
+          resultHTML += `<div style="color: #10B981; font-weight: 600; margin-bottom: 10px;">✅ Summary messages sent!</div>`;
+          resultHTML += `<div>Total users: ${data.totalUsers}</div>`;
+          resultHTML += `<div>Successfully sent: ${data.sent}</div>`;
+
+          if (data.failed > 0) {
+            resultHTML += `<div style="color: #EF4444;">Failed: ${data.failed}</div>`;
+            resultHTML += `<button class="btn btn-danger" style="margin-top: 10px;" onclick="showErrorDetails(${JSON.stringify(data.failures).replace(/"/g, '&quot;')})">View Failed Messages</button>`;
+          }
+
+          resultHTML += '</div>';
+          resultEl.innerHTML = resultHTML;
+
+          // Update game settings
+          mainTextEl.textContent = 'Send User List';
+          gameSettings.summariesSent = true;
+          gameSettings.summariesSentAt = new Date().toISOString();
+          updateSummaryStatus();
+        } else {
+          resultEl.innerHTML = `<div class="section error" style="margin-top: 15px;">❌ Error: ${data.error}</div>`;
+          sendBtn.disabled = false;
+          updateSummaryStatus();
+        }
+      } catch (error) {
+        resultEl.innerHTML = `<div class="section error" style="margin-top: 15px;">❌ Error: ${error.message}</div>`;
+        sendBtn.disabled = false;
+        updateSummaryStatus();
+      }
+    }
+
+    // Show error details modal
+    function showErrorDetails(failures) {
+      const modal = document.getElementById('errorModal');
+      const errorList = document.getElementById('errorList');
+
+      let html = '';
+      failures.forEach(failure => {
+        html += `<div class="error-item">`;
+        html += `<strong>${failure.name}</strong><br>`;
+        html += `Phone: ${failure.phone}<br>`;
+        html += `Error: ${failure.error}`;
+        html += `</div>`;
+      });
+
+      errorList.innerHTML = html;
+      modal.classList.add('show');
+    }
+
+    // Close error modal
+    function closeErrorModal() {
+      const modal = document.getElementById('errorModal');
+      modal.classList.remove('show');
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('errorModal');
+      if (event.target === modal) {
+        modal.classList.remove('show');
+      }
+    }
+
+    // Initial load
+    fetchStats();
+    fetchGameSettings();
+    resetAutoRefresh();
+  </script>
+</body>
+</html>

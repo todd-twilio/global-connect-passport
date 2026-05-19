@@ -1,0 +1,35 @@
+{
+  "name": "global-connect-passport",
+  "version": "1.0.0",
+  "description": "WhatsApp/SMS networking game for global company events",
+  "main": "index.js",
+  "scripts": {
+    "setup": "node setup-airtable.js",
+    "deploy": "twilio serverless:deploy"
+  },
+  "dependencies": {
+    "airtable": "^0.12.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/twilio-samples/global-connect.git"
+  },
+  "keywords": [
+    "twilio",
+    "airtable",
+    "whatsapp",
+    "sms",
+    "networking",
+    "events",
+    "gamification"
+  ],
+  "author": "Twilio",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/twilio-samples/global-connect/issues"
+  },
+  "homepage": "https://github.com/twilio-samples/global-connect#readme"
+}

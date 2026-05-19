@@ -1,0 +1,24 @@
+# Environment variables and secrets
+.env
+
+# Twilio deployment artifacts
+.twiliodeployinfo
+
+# Dependencies
+node_modules/
+
+# macOS system files
+.DS_Store
+
+# Claude Code session files
+.sessions/
+.claude/settings.local.json
+.claude/logs/
+
+# Temporary exports (can be regenerated)
+studio-flow-export.json
+airtable-schema-export.json
+
+# Internal planning documents
+*-PLAN.md
+*-SUMMARY.md
