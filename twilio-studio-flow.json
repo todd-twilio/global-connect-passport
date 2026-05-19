@@ -1,50 +1,60 @@
 {
-  "description": "Global Connect Passport - SMS Flow",
+  "description": "Global Connect Game - Complete",
+  "flags": {
+    "allow_concurrent_calls": true
+  },
+  "initial_state": "Trigger",
   "states": [
     {
       "name": "Trigger",
-      "type": "trigger",
-      "transitions": [
-        {
-          "event": "incomingMessage",
-          "next": "parse_message"
-        }
-      ],
       "properties": {
         "offset": {
           "x": 0,
           "y": 0
         }
-      }
-    },
-    {
-      "name": "parse_message",
-      "type": "set-variables",
+      },
       "transitions": [
         {
+          "event": "incomingMessage",
           "next": "validate_stamp"
+        },
+        {
+          "event": "incomingCall"
+        },
+        {
+          "event": "incomingConversationMessage"
+        },
+        {
+          "event": "incomingRequest"
+        },
+        {
+          "event": "incomingParent"
         }
       ],
-      "properties": {
-        "variables": [
-          {
-            "key": "sender_phone",
-            "value": "{{trigger.message.From}}"
-          },
-          {
-            "key": "message_body",
-            "value": "{{trigger.message.Body}}"
-          }
-        ],
-        "offset": {
-          "x": 0,
-          "y": 200
-        }
-      }
+      "type": "trigger"
     },
     {
       "name": "validate_stamp",
-      "type": "make-http-request",
+      "properties": {
+        "add_twilio_auth": false,
+        "content_type": "application/x-www-form-urlencoded",
+        "method": "POST",
+        "offset": {
+          "x": 0,
+          "y": 200
+        },
+        "parameters": [
+          {
+            "key": "collectorPhone",
+            "value": "{{trigger.message.From}}"
+          },
+          {
+            "key": "targetCode",
+            "value": "{{trigger.message.Body}}"
+          }
+        ],
+        "url": "https://YOUR-SERVICE-NAME.twil.io/validate-stamp"
+      },
       "transitions": [
         {
           "event": "success",
@@ -55,235 +65,742 @@
           "next": "system_error"
         }
       ],
-      "properties": {
-        "method": "POST",
-        "content_type": "application/x-www-form-urlencoded;charset=utf-8",
-        "url": "https://YOUR-SERVICE-NAME.twil.io/validate-stamp",
-        "parameters": [
-          {
-            "key": "collectorPhone",
-            "value": "{{widgets.parse_message.sender_phone}}"
-          },
-          {
-            "key": "targetCode",
-            "value": "{{widgets.parse_message.message_body}}"
-          }
-        ],
-        "offset": {
-          "x": 0,
-          "y": 400
-        }
-      }
+      "type": "make-http-request"
     },
     {
       "name": "check_action",
-      "type": "split-based-on",
+      "properties": {
+        "input": "{{widgets.validate_stamp.parsed.action}}",
+        "offset": {
+          "x": -20,
+          "y": 470
+        }
+      },
       "transitions": [
         {
           "event": "noMatch",
           "next": "system_error"
         },
         {
-          "event": "match",
           "conditions": [
             {
-              "friendly_name": "activate",
-              "arguments": ["{{widgets.validate_stamp.parsed.action}}"],
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.action}}"
+              ],
+              "friendly_name": "Is Activation",
               "type": "equal_to",
               "value": "activate"
             }
           ],
+          "event": "match",
           "next": "send_activation"
         },
         {
-          "event": "match",
           "conditions": [
             {
-              "friendly_name": "stamp_collected",
-              "arguments": ["{{widgets.validate_stamp.parsed.action}}"],
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.action}}"
+              ],
+              "friendly_name": "Is Stamp",
               "type": "equal_to",
               "value": "stamp_collected"
             }
           ],
-          "next": "check_completion"
+          "event": "match",
+          "next": "same_language"
         },
         {
-          "event": "match",
           "conditions": [
             {
-              "friendly_name": "error",
-              "arguments": ["{{widgets.validate_stamp.parsed.action}}"],
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.action}}"
+              ],
+              "friendly_name": "Is Error",
               "type": "equal_to",
               "value": "error"
             }
           ],
-          "next": "send_error"
+          "event": "match",
+          "next": "check_action_error"
+        },
+        {
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.action}}"
+              ],
+              "friendly_name": "If value equal_to started",
+              "type": "matches_any_of",
+              "value": "started, start"
+            }
+          ],
+          "event": "match",
+          "next": "form_activation"
+        },
+        {
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.action}}"
+              ],
+              "friendly_name": "If value equal_to game_ended",
+              "type": "equal_to",
+              "value": "game_ended"
+            }
+          ],
+          "event": "match",
+          "next": "game_over"
         }
       ],
-      "properties": {
-        "input": "{{widgets.validate_stamp.parsed.action}}",
-        "offset": {
-          "x": 0,
-          "y": 600
-        }
-      }
+      "type": "split-based-on"
     },
     {
       "name": "send_activation",
-      "type": "send-message",
+      "properties": {
+        "body": "{{widgets.validate_stamp.parsed.collector.personalizedGreeting.value}}\n\nYour passport is active 🎉! Meet 10 other people to unlock your 'Global Artist' magnet and gift 🎁. Just enter their 4-digit badge code here!\n\nEnjoy your travels ✈️!!!",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": -220,
+          "y": 950
+        },
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "send_completion",
+      "properties": {
+        "body": "Passport Validated! 🎉\n\nYou've traveled the world tonight. Head to the Global Art Wall and add your mark to our collective masterpiece. Show this text to the attendant for your gift.\n\nWait!!! Collect more stamps and be at the top of the leaderboard for additional prizes 🎁!",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 430,
+          "y": 1870
+        },
+        "to": "{{trigger.message.From}}"
+      },
       "transitions": [
         {
           "event": "sent",
-          "next": "end"
+          "next": "send_stamp_target"
+        },
+        {
+          "event": "failed"
         }
       ],
-      "properties": {
-        "body": "Welcome, {{widgets.validate_stamp.parsed.collector.name}}! Your passport is active. Meet 5 people from different countries to unlock your 'Global Artist' tile and a gift. Just text their 4-digit badge codes to me!",
-        "to": "{{widgets.parse_message.sender_phone}}",
-        "from": "{{flow.channel.address}}",
-        "offset": {
-          "x": -400,
-          "y": 800
-        }
-      }
+      "type": "send-message"
     },
     {
-      "name": "check_completion",
-      "type": "split-based-on",
+      "name": "send_stamp_collector",
+      "properties": {
+        "body": "Stamp Collected! \n\nYou just met {{widgets.validate_stamp.parsed.target.name}} ({{widgets.validate_stamp.parsed.target.country}}). \n\n{% if widgets.validate_stamp.parsed.target.linkedin %}LinkedIn: http://www.linkedin.com/{{widgets.validate_stamp.parsed.target.linkedin}} {% endif %}\n\n{{widgets.validate_stamp.parsed.newStampCount}}/5 stamps collected.",
+        "content_sid": "HXbb376c8977326f588f4185accb59a152",
+        "content_variables": [
+          {
+            "key": "1",
+            "value": "{{widgets.validate_stamp.parsed.target.name}}"
+          },
+          {
+            "key": "2",
+            "value": "{{widgets.validate_stamp.parsed.target.countryFlag}}"
+          },
+          {
+            "key": "4",
+            "value": "{{widgets.validate_stamp.parsed.target.linkedin.value}}"
+          },
+          {
+            "key": "3",
+            "value": "{{widgets.validate_stamp.parsed.target.stampsGreeting.value}}"
+          }
+        ],
+        "from": "{{flow.channel.address}}",
+        "message_type": "content_template",
+        "offset": {
+          "x": 380,
+          "y": 1270
+        },
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent",
+          "next": "check_stamp_number"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "send_stamp_target",
+      "properties": {
+        "body": "Your code was just collected by {{widgets.validate_stamp.parsed.collector.name}} ({{widgets.validate_stamp.parsed.collector.country}})! \n\n{% if widgets.validate_stamp.parsed.collector.linkedin %}LinkedIn: {{widgets.validate_stamp.parsed.collector.linkedin}}{% endif %}",
+        "content_sid": "HX864a53aedd05da9606765161b9d09450",
+        "content_variables": [
+          {
+            "key": "1",
+            "value": "{{widgets.validate_stamp.parsed.collector.name}}"
+          },
+          {
+            "key": "2",
+            "value": "{{widgets.validate_stamp.parsed.collector.countryFlag}}"
+          }
+        ],
+        "from": "{{flow.channel.address}}",
+        "message_type": "content_template",
+        "offset": {
+          "x": 190,
+          "y": 2110
+        },
+        "to": "{{widgets.validate_stamp.parsed.target.phone}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "duplicate_stamp",
+      "properties": {
+        "body": "You've already collected this stamp. Try someone new! 😹",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 2020,
+          "y": 1500
+        },
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "system_error",
+      "properties": {
+        "body": "System error. Please try again or contact an attendant.",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 1000,
+          "y": 500
+        },
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "check_action_error",
+      "properties": {
+        "input": "{{widgets.validate_stamp.parsed.errorType}}",
+        "offset": {
+          "x": 1190,
+          "y": 890
+        }
+      },
+      "transitions": [
+        {
+          "event": "noMatch"
+        },
+        {
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.errorType}}"
+              ],
+              "friendly_name": "If value equal_to not_registered",
+              "type": "equal_to",
+              "value": "not_registered"
+            }
+          ],
+          "event": "match",
+          "next": "not_registered"
+        },
+        {
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.errorType}}"
+              ],
+              "friendly_name": "If value equal_to invalid_code",
+              "type": "equal_to",
+              "value": "invalid_code"
+            }
+          ],
+          "event": "match",
+          "next": "invalid_code"
+        },
+        {
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.errorType}}"
+              ],
+              "friendly_name": "If value equal_to duplicate_stamp",
+              "type": "equal_to",
+              "value": "duplicate_stamp"
+            }
+          ],
+          "event": "match",
+          "next": "duplicate_stamp"
+        },
+        {
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.errorType}}"
+              ],
+              "friendly_name": "If value equal_to missing_parameters",
+              "type": "equal_to",
+              "value": "missing_parameters"
+            }
+          ],
+          "event": "match",
+          "next": "missing_parameters"
+        },
+        {
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.errorType}}"
+              ],
+              "friendly_name": "If value equal_to already_activated",
+              "type": "equal_to",
+              "value": "already_activated"
+            }
+          ],
+          "event": "match",
+          "next": "already_activated"
+        },
+        {
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.errorType}}"
+              ],
+              "friendly_name": "If value equal_to not_activated",
+              "type": "equal_to",
+              "value": "not_activated"
+            }
+          ],
+          "event": "match",
+          "next": "not_activated"
+        },
+        {
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.errorType}}"
+              ],
+              "friendly_name": "If value equal_to invalid_format",
+              "type": "equal_to",
+              "value": "invalid_format"
+            }
+          ],
+          "event": "match",
+          "next": "invalid_format_check"
+        },
+        {
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.errorType}}"
+              ],
+              "friendly_name": "If value equal_to url_detected",
+              "type": "equal_to",
+              "value": "url_detected"
+            }
+          ],
+          "event": "match",
+          "next": "url_detected"
+        }
+      ],
+      "type": "split-based-on"
+    },
+    {
+      "name": "not_registered",
+      "properties": {
+        "body": "Hello there, welcome to our Twilio Global Connect Passport Game. \n\nPlease fill out this form to play: \n\nhttps://airtable.com/appxHwsZ9rnUYX6eJ/pagr9Vuj0hDslVK12/form?hide_Form_submitted=true&hide_Activated=true",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 1420,
+          "y": 1350
+        },
+        "shorten_urls": true,
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "not_activated",
+      "properties": {
+        "body": "Hey {{widgets.validate_stamp.parsed.collector.name}}! Please activate your passport first by sending in your assigned 4 digit code:  {{widgets.validate_stamp.parsed.collector.idCode}}",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 2800,
+          "y": 1680
+        },
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "invalid_code",
+      "properties": {
+        "body": "Sorry, that code doesn't exist. Please try again. 🤷",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 1700,
+          "y": 1410
+        },
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "missing_parameters",
+      "properties": {
+        "body": "System error. Please try again.",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 2332,
+          "y": 1567
+        },
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "Invalid_format_activated",
+      "properties": {
+        "body": "Hi there {{widgets.validate_stamp.parsed.collector.name}}. Our game only responds to 4 digit codes. 🤔\n\nFind another player's code and enter it here. Enjoy!",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 3500,
+          "y": 1940
+        },
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "already_activated",
+      "properties": {
+        "body": "Easy there...it appears you are already active. Go search out another user's code and enter it here.",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 2577,
+          "y": 1610
+        },
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "check_stamp_number",
+      "properties": {
+        "input": "{{widgets.validate_stamp.parsed.newStampCount}}",
+        "offset": {
+          "x": 220,
+          "y": 1580
+        }
+      },
       "transitions": [
         {
           "event": "noMatch",
-          "next": "send_to_collector"
+          "next": "send_stamp_target"
         },
         {
-          "event": "match",
           "conditions": [
             {
-              "friendly_name": "is_complete",
-              "arguments": ["{{widgets.validate_stamp.parsed.isComplete}}"],
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.newStampCount}}"
+              ],
+              "friendly_name": "If value equal_to 10",
+              "type": "equal_to",
+              "value": "10"
+            }
+          ],
+          "event": "match",
+          "next": "send_completion"
+        }
+      ],
+      "type": "split-based-on"
+    },
+    {
+      "name": "form_activation",
+      "properties": {
+        "body": "{{widgets.validate_stamp.parsed.collector.personalizedGreeting.value}}\n\nYour passport code is {{widgets.validate_stamp.parsed.collector.idCode}} and is now active 🎉! \n\nMeet 10 people other people to unlock your 'Global Artist' magnet and gift 🎁. Just enter their 4-digit badge code here!",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": -580,
+          "y": 840
+        },
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "invalid_format_check",
+      "properties": {
+        "input": "{{widgets.validate_stamp.parsed.collector.activated}}",
+        "offset": {
+          "x": 3150,
+          "y": 1680
+        }
+      },
+      "transitions": [
+        {
+          "event": "noMatch",
+          "next": "Invalid_format_not_activated"
+        },
+        {
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.collector.activated}}"
+              ],
+              "friendly_name": "If value equal_to True",
               "type": "equal_to",
               "value": "true"
             }
           ],
-          "next": "send_completion"
+          "event": "match",
+          "next": "Invalid_format_activated"
         }
       ],
-      "properties": {
-        "input": "{{widgets.validate_stamp.parsed.isComplete}}",
-        "offset": {
-          "x": 0,
-          "y": 800
-        }
-      }
+      "type": "split-based-on"
     },
     {
-      "name": "send_to_collector",
-      "type": "send-message",
+      "name": "Invalid_format_not_activated",
+      "properties": {
+        "body": "Hi there {{widgets.validate_stamp.parsed.collector.name}}. Our game only responds to 4 digit codes. 🤔\n\nEnter your own code to start the game: {{widgets.validate_stamp.parsed.collector.idCode}}. \n\nOnce your activation has been confirmed, find another player's code and enter it here. Enjoy!",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 3170,
+          "y": 1950
+        },
+        "to": "{{trigger.message.From}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "game_over",
+      "properties": {
+        "body": "Thank you for playing Twilio Global Connect! We have closed the game, but we hope you enjoy the rest of the event. 🎉 🥂❤️",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 570,
+          "y": 830
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "to": "{{contact.channel.address}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "url_detected",
+      "properties": {
+        "body": "Your info has been received and will be updated once approved.",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "offset": {
+          "x": 3600,
+          "y": 1740
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "to": "{{contact.channel.address}}"
+      },
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "type": "send-message"
+    },
+    {
+      "name": "send_stamp_collector_no_greeting",
+      "properties": {
+        "body": "Stamp Collected! \n\nYou just met {{widgets.validate_stamp.parsed.target.name}} ({{widgets.validate_stamp.parsed.target.country}}). \n\n{% if widgets.validate_stamp.parsed.target.linkedin %}LinkedIn: http://www.linkedin.com/{{widgets.validate_stamp.parsed.target.linkedin}} {% endif %}\n\n{{widgets.validate_stamp.parsed.newStampCount}}/5 stamps collected.",
+        "content_sid": "HXf1df5ec19985a76294dd11b204671e24",
+        "content_variables": [
+          {
+            "key": "1",
+            "value": "{{widgets.validate_stamp.parsed.target.name}}"
+          },
+          {
+            "key": "2",
+            "value": "{{widgets.validate_stamp.parsed.target.countryFlag}}"
+          },
+          {
+            "key": "3",
+            "value": "{{widgets.validate_stamp.parsed.target.linkedin.value}}"
+          }
+        ],
+        "from": "{{flow.channel.address}}",
+        "message_type": "content_template",
+        "offset": {
+          "x": 30,
+          "y": 1280
+        },
+        "to": "{{trigger.message.From}}"
+      },
       "transitions": [
         {
           "event": "sent",
-          "next": "send_to_target"
+          "next": "check_stamp_number"
+        },
+        {
+          "event": "failed"
         }
       ],
-      "properties": {
-        "body": "Stamp Collected! You just met {{widgets.validate_stamp.parsed.target.name}} ({{widgets.validate_stamp.parsed.target.country}}). {{widgets.validate_stamp.parsed.target.linkedin}} ({{widgets.validate_stamp.parsed.newStampCount}}/5 Stamps Collected)",
-        "to": "{{widgets.parse_message.sender_phone}}",
-        "from": "{{flow.channel.address}}",
-        "offset": {
-          "x": 200,
-          "y": 1200
-        }
-      }
+      "type": "send-message"
     },
     {
-      "name": "send_to_target",
-      "type": "send-message",
-      "transitions": [
-        {
-          "event": "sent",
-          "next": "end"
-        }
-      ],
+      "name": "same_language",
       "properties": {
-        "body": "Your code was just collected by {{widgets.validate_stamp.parsed.collector.name}} ({{widgets.validate_stamp.parsed.collector.country}})! {{widgets.validate_stamp.parsed.collector.linkedin}}",
-        "to": "{{widgets.validate_stamp.parsed.target.phone}}",
-        "from": "{{flow.channel.address}}",
+        "input": "{{widgets.validate_stamp.parsed.languageMatch}}",
         "offset": {
-          "x": 200,
-          "y": 1400
-        }
-      }
-    },
-    {
-      "name": "send_completion",
-      "type": "send-message",
-      "transitions": [
-        {
-          "event": "sent",
-          "next": "send_to_target"
-        }
-      ],
-      "properties": {
-        "body": "Passport Validated! You've traveled the world tonight. Head to the Global Art Wall, grab a tile for your industry basket, add your company name and country using the markers and add your mark to our collective masterpiece. Show this text to the attendant for your gift!",
-        "to": "{{widgets.parse_message.sender_phone}}",
-        "from": "{{flow.channel.address}}",
-        "offset": {
-          "x": -200,
+          "x": 180,
           "y": 1000
         }
-      }
-    },
-    {
-      "name": "send_error",
-      "type": "send-message",
+      },
       "transitions": [
         {
-          "event": "sent",
-          "next": "end"
-        }
-      ],
-      "properties": {
-        "body": "{{widgets.validate_stamp.parsed.error}}",
-        "to": "{{widgets.parse_message.sender_phone}}",
-        "from": "{{flow.channel.address}}",
-        "offset": {
-          "x": 400,
-          "y": 800
-        }
-      }
-    },
-    {
-      "name": "system_error",
-      "type": "send-message",
-      "transitions": [
+          "event": "noMatch",
+          "next": "send_stamp_collector_no_greeting"
+        },
         {
-          "event": "sent",
-          "next": "end"
+          "conditions": [
+            {
+              "arguments": [
+                "{{widgets.validate_stamp.parsed.languageMatch}}"
+              ],
+              "friendly_name": "If value equal_to different",
+              "type": "equal_to",
+              "value": "different"
+            }
+          ],
+          "event": "match",
+          "next": "send_stamp_collector"
         }
       ],
-      "properties": {
-        "body": "System error. Please try again or contact an attendant.",
-        "to": "{{widgets.parse_message.sender_phone}}",
-        "from": "{{flow.channel.address}}",
-        "offset": {
-          "x": 400,
-          "y": 1000
-        }
-      }
-    },
-    {
-      "name": "end",
-      "type": "end",
-      "properties": {
-        "offset": {
-          "x": 0,
-          "y": 1600
-        }
-      }
+      "type": "split-based-on"
     }
-  ],
-  "initial_state": "Trigger",
-  "flags": {
-    "allow_concurrent_calls": true
-  }
+  ]
 }
